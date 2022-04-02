@@ -2,6 +2,13 @@
 
 package cruve25519.field
 
+import math.bits.*
+
+fun ULong.mul64(b: ULong): UBigInt {
+    val (hi, lo) = mul64(this, b)
+    return lo to hi
+}
+
 /**
  * @return `a >> 51`. `a` is assumed to be at most 115 bits.
  */
@@ -47,7 +54,7 @@ internal fun feMul(v: FieldElement, a: FieldElement, b: FieldElement) {
     val a3 = a[3]
     val a4 = a[4]
 
-    val b0 = a[0]
+    val b0 = b[0]
     val b1 = b[1]
     val b2 = b[2]
     val b3 = b[3]
@@ -129,11 +136,11 @@ internal fun feMul(v: FieldElement, a: FieldElement, b: FieldElement) {
     // Now all coefficients fit into 64-bit registers but are still too large to
     // be passed around as a Element. We therefore do one last carry chain,
     // where the carries will be small enough to fit in the wiggle room above 2⁵¹.
-    v[0] = r0.lo and maskLow51Bits + c4 * 19u
-    v[1] = r1.lo and maskLow51Bits + c0
-    v[2] = r2.lo and maskLow51Bits + c1
-    v[3] = r3.lo and maskLow51Bits + c2
-    v[4] = r4.lo and maskLow51Bits + c3
+    v[0] = (r0.lo and MASK_LOW_51_BITS) + c4 * 19u
+    v[1] = (r1.lo and MASK_LOW_51_BITS) + c0
+    v[2] = (r2.lo and MASK_LOW_51_BITS) + c1
+    v[3] = (r3.lo and MASK_LOW_51_BITS) + c2
+    v[4] = (r4.lo and MASK_LOW_51_BITS) + c3
 
     v.carryPropagate()
 }
@@ -212,11 +219,11 @@ internal fun feSquare(v: FieldElement, a: FieldElement) {
     val c3 = shiftRight51(r3)
     val c4 = shiftRight51(r4)
 
-    v[0] = r0.lo and maskLow51Bits + c4 * 19u
-    v[1] = r1.lo and maskLow51Bits + c0
-    v[2] = r2.lo and maskLow51Bits + c1
-    v[3] = r3.lo and maskLow51Bits + c2
-    v[4] = r4.lo and maskLow51Bits + c3
+    v[0] = (r0.lo and MASK_LOW_51_BITS) + c4 * 19u
+    v[1] = (r1.lo and MASK_LOW_51_BITS) + c0
+    v[2] = (r2.lo and MASK_LOW_51_BITS) + c1
+    v[3] = (r3.lo and MASK_LOW_51_BITS) + c2
+    v[4] = (r4.lo and MASK_LOW_51_BITS) + c3
     v.carryPropagate()
 }
 
@@ -233,9 +240,9 @@ internal fun FieldElement.carryPropagate() = apply {
 
     // c4 is at most 64 - 51 = 13 bits, so c4*19 is at most 18 bits, and
     // the final l0 will be at most 52 bits. Similarly for the rest.
-    this[0] = this[0] and maskLow51Bits + c4 * 19u
-    this[1] = this[1] and maskLow51Bits + c0
-    this[2] = this[2] and maskLow51Bits + c1
-    this[3] = this[3] and maskLow51Bits + c2
-    this[4] = this[4] and maskLow51Bits + c3
+    this[0] = (this[0] and MASK_LOW_51_BITS) + c4 * 19u
+    this[1] = (this[1] and MASK_LOW_51_BITS) + c0
+    this[2] = (this[2] and MASK_LOW_51_BITS) + c1
+    this[3] = (this[3] and MASK_LOW_51_BITS) + c2
+    this[4] = (this[4] and MASK_LOW_51_BITS) + c3
 }

@@ -2,7 +2,11 @@
 
 package cruve25519.field
 
-import cruve25519.ulong
+import encoding.binary.LittleEndian
+import math.bits.UBigInt
+import math.bits.mul64
+import kotlin.experimental.or
+import kotlin.jvm.JvmInline
 
 // Element represents an element of the field GF(2^255-19). Note that this
 // is not a cryptographically secure group, and should only be used to interact
@@ -12,14 +16,25 @@ import cruve25519.ulong
 // are allowed to alias.
 //
 // The zero value is a valid zero element.
-internal typealias FieldElement = ULongArray
+@JvmInline
+value class FieldElement(val value: ULongArray = ULongArray(5)) : Iterable<ULong> {
+    operator fun get(index: Int) = value[index]
+    operator fun set(index: Int, ULong: ULong) {
+        value[index] = ULong
+    }
 
-internal fun feZero(): FieldElement = ulongArrayOf(0u, 0u, 0u, 0u, 0u)
-internal fun feOne(): FieldElement = ulongArrayOf(1u, 0u, 0u, 0u, 0u)
+    override fun iterator(): Iterator<ULong> = value.iterator()
 
-internal val maskLow51Bits = (1uL shl 51) - 1uL
+    companion object {
+        fun one() = FieldElement(ulongArrayOf(1u, 0u, 0u, 0u, 0u))
+    }
+}
 
-internal operator fun FieldElement.plus(b: FieldElement) = feZero().let { v ->
+fun FieldElement(bytes: ByteArray) = FieldElement().apply { setBytes(bytes) }
+
+internal val MASK_LOW_51_BITS = ((1L shl 51) - 1).toULong()
+
+operator fun FieldElement.plus(b: FieldElement) = FieldElement().let { v ->
     val a = this
     v[0] = a[0] + b[0]
     v[1] = a[1] + b[1]
@@ -29,7 +44,7 @@ internal operator fun FieldElement.plus(b: FieldElement) = feZero().let { v ->
     v.carryPropagate()
 }
 
-internal operator fun FieldElement.minus(b: FieldElement) = feZero().let { v ->
+operator fun FieldElement.minus(b: FieldElement) = FieldElement().let { v ->
     val a = this
     // We first add 2 * p, to guarantee the subtraction won't underflow, and
     // then subtract b (which can be up to 2^255 + 2^13 * 19).
@@ -42,21 +57,21 @@ internal operator fun FieldElement.minus(b: FieldElement) = feZero().let { v ->
 }
 
 // sets v = -a, and returns v.
-internal operator fun FieldElement.unaryMinus() = feZero() - this
+operator fun FieldElement.unaryMinus() = FieldElement() - this
 
-internal fun FieldElement.inv() = let { v ->
+fun FieldElement.inv() = let { v ->
     val z = this
     // Inversion is implemented as exponentiation with exponent p − 2. It uses the
     // same sequence of 255 squarings and 11 multiplications as [Curve25519].
-    val z2 = feZero()
-    val z9 = feZero()
-    val z11 = feZero()
-    val z2_5_0 = feZero()
-    val z2_10_0 = feZero()
-    val z2_20_0 = feZero()
-    val z2_50_0 = feZero()
-    val z2_100_0 = feZero()
-    val t = feZero()
+    val z2 = FieldElement()
+    val z9 = FieldElement()
+    val z11 = FieldElement()
+    val z2_5_0 = FieldElement()
+    val z2_10_0 = FieldElement()
+    val z2_20_0 = FieldElement()
+    val z2_50_0 = FieldElement()
+    val z2_100_0 = FieldElement()
+    val t = FieldElement()
 
     feSquare(z2, z) // 2
     feSquare(t, z2) // 4
@@ -117,34 +132,60 @@ internal fun FieldElement.inv() = let { v ->
     feMul(v, t, z11) // 2^255 - 21
 }
 
-internal fun FieldElement.setBytes(x: ByteArray) = also { v ->
+/**
+ *  SetBytes sets v to x, where x is a 32-byte little-endian encoding.
+ *
+ *  Consistent with RFC 7748, the most significant bit (the high bit of the
+ *  last byte) is ignored, and non-canonical values (2^255-19 through 2^255-1)
+ *  are accepted. Note that this is laxer than specified by RFC 8032, but
+ *  consistent with most Ed25519 implementations.
+ *
+ *  @throws IllegalArgumentException If x is not of the right length
+ */
+fun FieldElement.setBytes(x: ByteArray) {
+    require(x.size == 32) { "invalid field element input size; expected: 32, actual: ${x.size}" }
     // Bits 0:51 (bytes 0:8, bits 0:64, shift 0, mask 51).
-    v[0] = x.ulong(0..8)
-    v[0] = v[0] and maskLow51Bits
+    value[0] = (LittleEndian.uLong(x, 0)) and MASK_LOW_51_BITS
     // Bits 51:102 (bytes 6:14, bits 48:112, shift 3, mask 51).
-    v[1] = x.ulong(6..14) shr 3
-    v[1] = v[1] and maskLow51Bits
+    value[1] = (LittleEndian.uLong(x, 6) shr 3) and MASK_LOW_51_BITS
     // Bits 102:153 (bytes 12:20, bits 96:160, shift 6, mask 51).
-    v[2] = x.ulong(12..20) shr 6
-    v[2] = v[2] and maskLow51Bits
+    value[2] = (LittleEndian.uLong(x, 12) shr 6) and MASK_LOW_51_BITS
     // Bits 153:204 (bytes 19:27, bits 152:216, shift 1, mask 51).
-    v[3] = x.ulong(19..27) shr 1
-    v[3] = v[3] and maskLow51Bits
+    value[3] = (LittleEndian.uLong(x, 19) shr 1) and MASK_LOW_51_BITS
     // Bits 204:255 (bytes 24:32, bits 192:256, shift 12, mask 51).
     // Note: not bytes 25:33, shift 4, to avoid overread.
-    v[4] = x.ulong(24..32) shr 12
-    v[4] = v[4] and maskLow51Bits
+    value[4] = (LittleEndian.uLong(x, 24) shr 12) and MASK_LOW_51_BITS
 }
 
-internal fun FieldElement.times(y: FieldElement): FieldElement = feZero().also { v ->
-    feMul(v, this, y)
+fun FieldElement.getBytes(out: ByteArray = ByteArray(32)): ByteArray {
+    val t = FieldElement(value)
+    t.reduce()
+
+    val buf = ByteArray(8)
+    t.forEachIndexed { i, l ->
+        val bitsOffset = i * 51
+        val byte = l shl (bitsOffset % 8)
+        LittleEndian.putULong(buf, byte)
+        buf.forEachIndexed { bi, bb ->
+            val off = bitsOffset / 8 + bi
+            if (off < out.size) {
+                out[off] = (out[off]) or bb
+            }
+        }
+    }
+
+    return out
 }
 
-internal fun FieldElement.square() = feZero().also { v ->
+fun FieldElement.square() = FieldElement().also { v ->
     feSquare(v, this)
 }
 
-internal fun FieldElement.times(y: Int) = feZero().also { v ->
+operator fun FieldElement.times(y: FieldElement): FieldElement = FieldElement().also { v ->
+    feMul(v, this, y)
+}
+
+operator fun FieldElement.times(y: Int) = FieldElement().also { v ->
     val x = this
     val (x0lo, x0hi) = mul51(x[0], y)
     val (x1lo, x1hi) = mul51(x[1], y)
@@ -161,7 +202,7 @@ internal fun FieldElement.times(y: Int) = feZero().also { v ->
 }
 
 // reduces v modulo 2^255 - 19 and returns it.
-internal fun FieldElement.reduce() = apply {
+fun FieldElement.reduce() = apply {
     carryPropagate()
 
     // After the light reduction we now have a field element representation
@@ -180,20 +221,20 @@ internal fun FieldElement.reduce() = apply {
     this[0] += 19u * c
 
     this[1] += this[0] shr 51
-    this[0] = this[0] and maskLow51Bits
+    this[0] = this[0] and MASK_LOW_51_BITS
     this[2] += this[1] shr 51
-    this[1] = this[1] and maskLow51Bits
+    this[1] = this[1] and MASK_LOW_51_BITS
     this[3] += this[2] shr 51
-    this[2] = this[2] and maskLow51Bits
+    this[2] = this[2] and MASK_LOW_51_BITS
     this[4] += this[3] shr 51
-    this[3] = this[3] and maskLow51Bits
+    this[3] = this[3] and MASK_LOW_51_BITS
     // no additional carry
-    this[4] = this[4] and maskLow51Bits
+    this[4] = this[4] and MASK_LOW_51_BITS
 }
 
 internal fun mul51(a: ULong, b: Int): UBigInt {
     val (mh, ml) = mul64(a, b.toULong())
-    val lo = ml and maskLow51Bits
+    val lo = ml and MASK_LOW_51_BITS
     val hi = (mh shl 13) or (ml shr 51)
     return lo to hi
 }

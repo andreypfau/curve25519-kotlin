@@ -1,6 +1,6 @@
-package cruve25519.field
+package math.bits
 
-typealias UBigInt = Pair<ULong, ULong>
+internal typealias UBigInt = Pair<ULong, ULong>
 
 inline val UBigInt.lo get() = first
 inline val UBigInt.hi get() = second
@@ -44,3 +44,27 @@ internal fun mul64(x: ULong, y: ULong): UBigInt {
     val lo = x * y
     return hi to lo
 }
+
+/**
+ * @return the minimum number of bits required to represent `x`;
+ *
+ * the resLt is `0` for `x == 0`.
+ */
+val ULong.length: Int
+    get() {
+        var x = this
+        var n = 0
+        if (x >= 1uL shl 32) {
+            x = x shr 32
+            n += 32
+        }
+        if (x >= 1uL shl 16) {
+            x = x shr 16
+            n += 16
+        }
+        if (x >= 1uL shl 8) {
+            x = x shr 8
+            n += 8
+        }
+        return n + LEN_TAB[x.toInt()]
+    }
