@@ -4,8 +4,8 @@ package cruve25519.field
 
 import math.bits.*
 
-fun ULong.mul64(b: ULong): UBigInt {
-    val (hi, lo) = mul64(this, b)
+fun mul64(a: ULong, b: ULong): UBigInt {
+    val (hi, lo) = a.mul64(b)
     return lo to hi
 }
 
@@ -77,7 +77,7 @@ internal fun feMul(v: FieldElement, a: FieldElement, b: FieldElement) {
     r1 = addMul64(r1, a1, b0)
     r1 = addMul64(r1, a2_19, b4)
     r1 = addMul64(r1, a3_19, b3)
-    r1 = addMul64(r1, a4_19, b4)
+    r1 = addMul64(r1, a4_19, b2)
 
     // r2 = a0×b2 + a1×b1 + a2×b0 + 19×(a3×b4 + a4×b3)
     var r2 = mul64(a0, b2)
@@ -228,7 +228,7 @@ internal fun feSquare(v: FieldElement, a: FieldElement) {
 }
 
 /**
- * @ return the limbs below 52 bits by applying the reduction
+ * @return the limbs below 52 bits by applying the reduction
  * identity (a * 2²⁵⁵ + b = a * 19 + b) to the l4 carry.
  */
 internal fun FieldElement.carryPropagate() = apply {
@@ -240,7 +240,7 @@ internal fun FieldElement.carryPropagate() = apply {
 
     // c4 is at most 64 - 51 = 13 bits, so c4*19 is at most 18 bits, and
     // the final l0 will be at most 52 bits. Similarly for the rest.
-    this[0] = (this[0] and MASK_LOW_51_BITS) + c4 * 19u
+    this[0] = (this[0] and MASK_LOW_51_BITS) + (c4 * 19u)
     this[1] = (this[1] and MASK_LOW_51_BITS) + c0
     this[2] = (this[2] and MASK_LOW_51_BITS) + c1
     this[3] = (this[3] and MASK_LOW_51_BITS) + c2

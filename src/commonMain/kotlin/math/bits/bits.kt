@@ -6,7 +6,7 @@ inline val UBigInt.lo get() = first
 inline val UBigInt.hi get() = second
 
 internal fun addMul64(v: UBigInt, a: ULong, b: ULong): UBigInt {
-    val (hi1, lo1) = mul64(a, b)
+    val (hi1, lo1) = a.mul64(b)
     val (lo2, c) = add64(lo1, v.lo, 0uL)
     val (hi2, _) = add64(hi1, v.hi, c)
     return lo2 to hi2
@@ -29,18 +29,19 @@ internal fun add64(x: ULong, y: ULong, carry: ULong): UBigInt {
  * @return the 128-bit product of `x` and `y`: (hi, lo) = x * y
  * with the product bits' upper half returned in `hi` and the lower half returned in `lo`.
  */
-internal fun mul64(x: ULong, y: ULong): UBigInt {
-    val mask32 = 1uL shl 32 - 1
+internal fun ULong.mul64(y: ULong): UBigInt {
+    val x = this
+    val mask32 = (1uL shl 32) - 1u
     val x0 = x and mask32
     val x1 = x shr 32
     val y0 = y and mask32
     val y1 = y shr 32
     val w0 = x0 * y0
-    val t = x1 * y0 + w0 shr 32
+    val t = x1 * y0 + (w0 shr 32)
     var w1 = t and mask32
     val w2 = t shr 32
     w1 += x0 * y1
-    val hi = x1 * y1 + w2 + w1 shr 32
+    val hi = x1 * y1 + w2 + (w1 shr 32)
     val lo = x * y
     return hi to lo
 }

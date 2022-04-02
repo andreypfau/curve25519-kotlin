@@ -32,9 +32,10 @@ value class FieldElement(val value: ULongArray = ULongArray(5)) : Iterable<ULong
 
 fun FieldElement(bytes: ByteArray) = FieldElement().apply { setBytes(bytes) }
 
-internal val MASK_LOW_51_BITS = ((1L shl 51) - 1).toULong()
+internal val MASK_LOW_51_BITS = (1uL shl 51) - 1u
 
-operator fun FieldElement.plus(b: FieldElement) = FieldElement().let { v ->
+operator fun FieldElement.plus(b: FieldElement): FieldElement {
+    val v = FieldElement()
     val a = this
     v[0] = a[0] + b[0]
     v[1] = a[1] + b[1]
@@ -42,6 +43,7 @@ operator fun FieldElement.plus(b: FieldElement) = FieldElement().let { v ->
     v[3] = a[3] + b[3]
     v[4] = a[4] + b[4]
     v.carryPropagate()
+    return v
 }
 
 operator fun FieldElement.minus(b: FieldElement) = FieldElement().let { v ->
@@ -157,7 +159,7 @@ fun FieldElement.setBytes(x: ByteArray) {
     value[4] = (LittleEndian.uLong(x, 24) shr 12) and MASK_LOW_51_BITS
 }
 
-fun FieldElement.getBytes(out: ByteArray = ByteArray(32)): ByteArray {
+fun FieldElement.toBytes(out: ByteArray = ByteArray(32)): ByteArray {
     val t = FieldElement(value)
     t.reduce()
 
@@ -233,7 +235,7 @@ fun FieldElement.reduce() = apply {
 }
 
 internal fun mul51(a: ULong, b: Int): UBigInt {
-    val (mh, ml) = mul64(a, b.toULong())
+    val (mh, ml) = a.mul64(b.toULong())
     val lo = ml and MASK_LOW_51_BITS
     val hi = (mh shl 13) or (ml shr 51)
     return lo to hi

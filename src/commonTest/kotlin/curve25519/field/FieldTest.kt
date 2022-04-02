@@ -3,10 +3,12 @@
 package curve25519.field
 
 import cruve25519.field.*
-import math.bits.*
+import math.bits.addMul64
+import math.bits.hi
+import math.bits.length
+import math.bits.lo
 import kotlin.experimental.and
 import kotlin.random.Random
-import kotlin.random.nextULong
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -14,12 +16,14 @@ import kotlin.test.assertTrue
 
 class FieldTest {
     @Test
-    fun testMultiplyDistributesOverAdd() = repeat(10) {
-        multiplyDistributesOverAdd(
-            x = FieldElement(ulongArrayOf(Random.nextULong(), 0u, 0u, 0u, 0u)),
-            y = FieldElement(ulongArrayOf(Random.nextULong(), 0u, 0u, 0u, 0u)),
-            z = FieldElement(ulongArrayOf(Random.nextULong(), 0u, 0u, 0u, 0u))
-        )
+    fun testMultiplyDistributesOverAdd() {
+        repeat(1024) {
+            multiplyDistributesOverAdd(
+                x = FieldElement(Random.nextBytes(32)),
+                y = FieldElement(Random.nextBytes(32)),
+                z = FieldElement(Random.nextBytes(32)),
+            )
+        }
     }
 
     @Test
@@ -56,7 +60,7 @@ class FieldTest {
         val t3 = y * z
         t2 += t3
 
-        assertContentEquals(t1, t2, "x=${x[0]} y=${y[0]} z=${z[0]}; t1=${t1[0]} t2=${t2[0]}")
+        assertContentEquals(t1.toBytes(), t2.toBytes())
         assertTrue(t1.isInBounds())
         assertTrue(t2.isInBounds())
     }
@@ -76,13 +80,13 @@ class FieldTest {
         // Mask the most significant bit as it's ignored by setBytes. (Now
         // instead of earlier so we check the masking in [setBytes] is working.)
         input[input.lastIndex] = input[input.lastIndex] and ((1 shl 7) - 1).toByte()
-        val fieldBytes = fieldElement.getBytes()
+        val fieldBytes = fieldElement.toBytes()
         assertContentEquals(input, fieldBytes)
         assertTrue(fieldElement.isInBounds())
     }
 
     private fun f2(fieldElement: FieldElement, r: FieldElement) {
-        r.setBytes(fieldElement.getBytes())
+        r.setBytes(fieldElement.toBytes())
 
         // Intentionally not using Equal not to go through Bytes again.
         // Calling reduce because both Generate and SetBytes can produce
