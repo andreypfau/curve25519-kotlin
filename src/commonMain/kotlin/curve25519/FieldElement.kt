@@ -39,6 +39,8 @@ class FieldElement(
         return FieldElement(v)
     }
 
+    operator fun unaryMinus(): FieldElement = zero() - this
+
     // Limb multiplication works like pen-and-paper columnar multiplication, but
     // with 51-bit limbs instead of digits.
     //
@@ -256,15 +258,275 @@ class FieldElement(
         return FieldElement(v)
     }
 
+    fun invert(): FieldElement {
+        val z = this
+        val z2 = z.square() // 2
+        var t = z2.square() // 4
+        t = t.square() // 8
+        val z9 = t * z // 9
+        val z11 = z9 * z2 // 11
+        t = z11.square() // 22
+        val z2_5_0 = t * z9 // 32 = 2^5 - 2^0
+
+        t = z2_5_0.square() // 2^6 - 2^1
+        repeat(4) {
+            t = t.square() // 2^10 - 2^5
+        }
+        val z2_10_0 = t * z2_5_0 // 2^10 - 2^0
+
+        t = z2_10_0.square() // 2^11 - 2^1
+        repeat(9) {
+            t = t.square() // 2^20 - 2^10
+        }
+        val z2_20_0 = t * z2_10_0 // 2^20 - 2^0
+
+        t = z2_20_0.square() // 2^21 - 2^1
+        repeat(19) {
+            t = t.square() // 2^40 - 2^20
+        }
+        t = t * z2_20_0 // 2^40 - 2^0
+
+        t = t.square() // 2^41 - 2^1
+        repeat(9) {
+            t = t.square() // 2^50 - 2^10
+        }
+        val z2_50_0 = t * z2_10_0 // 2^50 - 2^0
+
+        t = z2_50_0.square() // 2^51 - 2^1
+        repeat(49) {
+            t = t.square() // 2^10 - 2^50
+        }
+        val z2_100_0 = t * z2_50_0 // 2^100 - 2^0
+
+        t = z2_100_0.square() // 2^101 - 2^1
+        repeat(99) {
+            t = t.square() // 2^200 - 2^100
+        }
+        t = t * z2_100_0 // 2^200 - 2^0
+
+        t = t.square() // 2^201 - 2^1
+        repeat(49) {
+            t = t.square() // 2^250 - 2^50
+        }
+        t = t * z2_50_0 // 2^250 - 2^0
+
+        t = t.square() // 2^251 - 2^1
+        t = t.square() // 2^252 - 2^2
+        t = t.square() // 2^253 - 2^3
+        t = t.square() // 2^254 - 2^4
+        t = t.square() // 2^255 - 2^5
+        return t * z11
+    }
+
+    /**
+     * Raise this field element to the power (p-5)/8 = 2^252 -3.
+     */
+    fun pow25523(): FieldElement {
+        val x = this
+        var t0 = x.square() // x^2
+        var t1 = t0.square() // x^4
+        t1 = t1.square() // x^8
+        t1 = x * t1 // x^9
+        t0 = t0 * t1 // x^11
+        t0 = t0.square() // x^22
+        t0 = t1 * t0 // x^31
+        t1 = t0.square() // x^62
+        t1 = t1.square() // x^124
+        t1 = t1.square() // x^248
+        t1 = t1.square() // x^496
+        t1 = t1.square() // x^992
+        t0 = t1 * t0 // x^1023 -> 1023 = 2^10 - 1
+        t1 = t0.square() // 2^11 - 2
+        repeat(9) { // 2^20 - 2^10
+            t1 = t1.square()
+        }
+        t1 = t1 * t0 // 2^20 - 1
+        var t2 = t1.square() // // 2^21 - 2
+        repeat(19) { // 2^40 - 2^20
+            t2 = t2.square()
+        }
+        t1 = t2 * t1 // 2^40 - 1
+        t1 = t1.square() // 2^41 - 2
+        repeat(9) { // 2^50 - 2^10
+            t1 = t1.square()
+        }
+        t0 = t1 * t0 // 2^50 - 1
+        t1 = t0.square() // 2^51 - 2
+        repeat(49) { // 2^100 - 2^50
+            t1 = t1.square()
+        }
+        t1 = t1 * t0 // 2^100 - 1
+        t2 = t1.square() // 2^101 - 2
+        repeat(99) { // 2^200 - 2^100
+            t2 = t2.square()
+        }
+        t1 = t2 * t1 // 2^200 - 1
+        t1 = t1.square() // 2^201 - 2
+        repeat(49) { // 2^250 - 2^50
+            t1 = t1.square()
+        }
+        t0 = t1 * t0 // 2^250 - 1
+        t0 = t0.square() // 2^251 - 2
+        t0 = t0.square() // 2^252 - 4
+        return t0 * x // 2^252 - 3 -> x^(2^252-3)
+    }
+
+    fun toBytes(): ByteArray {
+        // First, reduce the limbs to ensure h < 2*p.
+        val limbs = reduce(data)
+
+        var q = (limbs[0] + 19u) shr 51
+        q = (limbs[1] + q) shr 51
+        q = (limbs[2] + q) shr 51
+        q = (limbs[3] + q) shr 51
+        q = (limbs[4] + q) shr 51
+
+        // Now we can compute r as r = h - pq = r - (2^255-19)q = r + 19q - 2^255q
+        limbs[0] += q * 19u
+
+        // Now carry the result to compute r + 19q ...
+        limbs[1] += limbs[0] shr 51
+        limbs[0] = limbs[0] and low_51_bit_mask
+        limbs[2] += limbs[1] shr 51
+        limbs[1] = limbs[1] and low_51_bit_mask
+        limbs[3] += limbs[2] shr 51
+        limbs[2] = limbs[2] and low_51_bit_mask
+        limbs[4] += limbs[3] shr 51
+        limbs[3] = limbs[3] and low_51_bit_mask
+        // ... but instead of carrying (limbs[4] >> 51) = 2^255q
+        // into another limb, discard it, subtracting the value
+        limbs[4] = limbs[4] and low_51_bit_mask
+
+        // Now arrange the bits of the limbs.
+        val s = ByteArray(32)
+        s[0] = limbs[0].toByte()
+        s[1] = (limbs[0] shr 8).toByte()
+        s[2] = (limbs[0] shr 16).toByte()
+        s[3] = (limbs[0] shr 24).toByte()
+        s[4] = (limbs[0] shr 32).toByte()
+        s[5] = (limbs[0] shr 40).toByte()
+        s[6] = ((limbs[0] shr 48) or (limbs[1] shl 3)).toByte()
+        s[7] = (limbs[1] shr 5).toByte()
+        s[8] = (limbs[1] shr 13).toByte()
+        s[9] = (limbs[1] shr 21).toByte()
+        s[10] = (limbs[1] shr 29).toByte()
+        s[11] = (limbs[1] shr 37).toByte()
+        s[12] = ((limbs[1] shr 45) or (limbs[2] shl 6)).toByte()
+        s[13] = (limbs[2] shr 2).toByte()
+        s[14] = (limbs[2] shr 10).toByte()
+        s[15] = (limbs[2] shr 18).toByte()
+        s[16] = (limbs[2] shr 26).toByte()
+        s[17] = (limbs[2] shr 34).toByte()
+        s[18] = (limbs[2] shr 42).toByte()
+        s[19] = ((limbs[2] shr 50) or (limbs[3] shl 1)).toByte()
+        s[20] = (limbs[3] shr 7).toByte()
+        s[21] = (limbs[3] shr 15).toByte()
+        s[22] = (limbs[3] shr 23).toByte()
+        s[23] = (limbs[3] shr 31).toByte()
+        s[24] = (limbs[3] shr 39).toByte()
+        s[25] = ((limbs[3] shr 47) or (limbs[4] shl 4)).toByte()
+        s[26] = (limbs[4] shr 4).toByte()
+        s[27] = (limbs[4] shr 12).toByte()
+        s[28] = (limbs[4] shr 20).toByte()
+        s[29] = (limbs[4] shr 28).toByte()
+        s[30] = (limbs[4] shr 36).toByte()
+        s[31] = (limbs[4] shr 44).toByte()
+
+        return s
+    }
+
+    fun isNegative() = (toBytes()[0].toInt() and 1) != 0
+
+    fun absolute() = select(-this, isNegative())
+
+    fun select(a: FieldElement, condition: Boolean): FieldElement {
+        val b = this
+        val m = if (condition) 0xFFFFFFFFFFFFFFFFu else 0uL
+
+        val ma0 = (m and a[0])
+        val mb0 = (m.inv() and b[0])
+
+        val v = ulongArrayOf(
+            ma0 or mb0,
+            (m and a[1]) or (m.inv() and b[1]),
+            (m and a[2]) or (m.inv() and b[2]),
+            (m and a[3]) or (m.inv() and b[3]),
+            (m and a[4]) or (m.inv() and b[4])
+        )
+        return FieldElement(v)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as FieldElement
+
+        if (!data.contentEquals(other.data)) return false
+
+        return true
+    }
+
+    override fun hashCode() = data.contentHashCode()
+
+    override fun toString() = "FieldElement(${data.joinToString()})"
+
     companion object {
         val low_51_bit_mask = (1uL shl 51) - 1u
         val mask32 = (1uL shl 32) - 1u
+
+        // 2^((p-1)/4), which squared is equal to -1 by Euler's Criterion.
+        val SQRT_M1 = FieldElement(
+            ulongArrayOf(
+                1718705420411056u, 234908883556509u, 2233514472574048u, 2117202627021982u, 765476049583133u
+            )
+        )
 
         fun zero() = FieldElement(ulongArrayOf(0u, 0u, 0u, 0u, 0u))
         fun one() = FieldElement(ulongArrayOf(1u, 0u, 0u, 0u, 0u))
 
         fun sqrtRatio(u: FieldElement, v: FieldElement): Pair<FieldElement, Boolean> {
-            TODO()
+            // Using the same trick as in ed25519 decoding, we merge the
+            // inversion, the square root, and the square test as follows.
+            //
+            // To compute sqrt(α), we can compute β = α^((p+3)/8).
+            // Then β^2 = ±α, so multiplying β by sqrt(-1) if necessary
+            // gives sqrt(α).
+            //
+            // To compute 1/sqrt(α), we observe that
+            //    1/β = α^(p-1 - (p+3)/8) = α^((7p-11)/8)
+            //                            = α^3 * (α^7)^((p-5)/8).
+            //
+            // We can therefore compute sqrt(u/v) = sqrt(u)/sqrt(v)
+            // by first computing
+            //    r = u^((p+3)/8) v^(p-1-(p+3)/8)
+            //      = u u^((p-5)/8) v^3 (v^7)^((p-5)/8)
+            //      = (u * v^3) (u * v^7)^((p-5)/8).
+            //
+            // If v is nonzero and u/v is square, then r^2 = ±u/v,
+            //                                     so vr^2 = ±u.
+            // If vr^2 =  u, then sqrt(u/v) = r.
+            // If vr^2 = -u, then sqrt(u/v) = r*sqrt(-1).
+            //
+            // If v is zero, r is also zero.
+
+            // r = (u * v^3) (u * v^7)^((p-5)/8)
+            val v3 = v.square() * v
+            val v7 = v3.square() * v
+            var r = (u * v3) * (u * v7).pow25523()
+
+            val check = v * r.square()
+
+            val uNeg = -u
+            val correctSignSqrt = check == u
+            val flippedSignSqrt = check == uNeg
+            val flippedSignSqrtI = check == (uNeg * SQRT_M1)
+
+            val rPrime = r * SQRT_M1
+            r = r.select(rPrime, flippedSignSqrt || flippedSignSqrtI)
+            r = r.absolute()
+
+            return r to (correctSignSqrt || flippedSignSqrt)
         }
 
         fun fromBytes(byteArray: ByteArray) = FieldElement(
@@ -288,47 +550,6 @@ class FieldElement(
                     ((byteArray[offset + 7].toULong() and 0xFFu) shl 56)
         }
 
-        private fun mul64(x: ULong, y: ULong): UBigInt {
-            val x0 = x and mask32
-            val x1 = x shr 32
-            val y0 = y and mask32
-            val y1 = y shr 32
-            val w0 = x0 * y0
-            val t = x1 * y0 + (w0 shr 32)
-            var w1 = t and mask32
-            val w2 = t shr 32
-            w1 += x0 * y1
-            return ulongArrayOf(
-                x * y,
-                x1 * y1 + w2 + (w1 shr 32)
-            )
-        }
-
-        // Add64 returns the sum with carry of x, y and carry: sum = x + y + carry.
-        // The carry input must be 0 or 1; otherwise the behavior is undefined.
-        // The carryOut output is guaranteed to be 0 or 1.
-        //
-        // This function's execution time does not depend on the inputs.
-        private fun add64(x: ULong, y: ULong, carry: ULong): ULongArray {
-            val sum = x + y + carry
-            // The sum will overflow if both top bits are set (x & y) or if one of them
-            // is (x | y), and a carry from the lower place happened. If such a carry
-            // happens, the top bit will be 1 + 0 + 1 = 0 (&^ sum).
-            val carryOut = ((x and y) or ((x or y) and sum.inv())) shr 63
-            return ulongArrayOf(sum, carryOut)
-        }
-
-        private fun addMul64(v: UBigInt, a: ULong, b: ULong): UBigInt {
-            val (lo1, hi1) = mul64(a, b)
-            val (lo2, c) = add64(lo1, v.lo, 0u)
-            val (hi2, _) = add64(hi1, v.hi, c)
-            return ulongArrayOf(lo2, hi2)
-        }
-
-        private fun shiftRightBy51(a: UBigInt): ULong {
-            return (a.hi shl (64 - 51)) or (a.lo shr 51)
-        }
-
         // Since the input limbs are bounded by 2^64, the biggest
         // carry-out is bounded by 2^13.
         //
@@ -339,7 +560,7 @@ class FieldElement(
         // Because we don't need to canonicalize, only to reduce the
         // limb sizes, it's OK to do a "weak reduction", where we
         // compute the carry-outs in parallel.
-        private fun reduce(a: ULongArray) {
+        private fun reduce(a: ULongArray): ULongArray {
             val c0 = a[0] shr 51
             val c1 = a[1] shr 51
             val c2 = a[2] shr 51
@@ -353,11 +574,9 @@ class FieldElement(
             a[2] = (a[2] and low_51_bit_mask) + c1
             a[3] = (a[3] and low_51_bit_mask) + c2
             a[4] = (a[4] and low_51_bit_mask) + c3
+
+            return a
         }
     }
 }
 
-internal typealias UBigInt = ULongArray
-
-val UBigInt.lo get() = this[0]
-val UBigInt.hi get() = this[1]

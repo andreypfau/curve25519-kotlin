@@ -1,3 +1,5 @@
+@file:Suppress("OPT_IN_USAGE")
+
 package curve25519
 
 class CompressedEdwardsY private constructor(
@@ -11,10 +13,17 @@ class CompressedEdwardsY private constructor(
         // u = y²-1
         val u = yy - z
         // v = dy²+1
-        val dyy = yy * EDWARDS_D
-        val v = dyy + z
-//        val (isValidCoordY, x) = FieldElement.sqrtRatioI(u, v)
-        TODO()
+        val v = (yy * EDWARDS_D) + z
+        val (x, isValidCoordY) = FieldElement.sqrtRatio(u, v)
+
+        if (!isValidCoordY) return null
+
+        return EdwardsPoint(
+            x = x.select(-x, (data[31].toInt() shr 7) != 0),
+            y = y,
+            z = z,
+            t = x * y
+        )
     }
 
     companion object {
