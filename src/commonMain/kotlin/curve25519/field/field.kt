@@ -1,6 +1,6 @@
 @file:Suppress("OPT_IN_USAGE")
 
-package cruve25519.field
+package curve25519.field
 
 import encoding.binary.LittleEndian
 import math.bits.UBigInt
