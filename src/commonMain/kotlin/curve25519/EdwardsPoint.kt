@@ -4,17 +4,19 @@ data class EdwardsPoint(
     val x: FieldElement,
     val y: FieldElement,
     val z: FieldElement,
-    val t: FieldElement
+    val t: FieldElement,
 ) {
-    /// Convert this `EdwardsPoint` on the Edwards model to the
-    /// corresponding `MontgomeryPoint` on the Montgomery model.
-    ///
-    /// This function has one exceptional case; the identity point of
-    /// the Edwards curve is sent to the 2-torsion point \\((0,0)\\)
-    /// on the Montgomery curve.
-    ///
-    /// Note that this is a one-way conversion, since the Montgomery
-    /// model does not retain sign information.
+    /**
+     * Convert this `EdwardsPoint` on the Edwards model to the
+     * corresponding `MontgomeryPoint` on the Montgomery model.
+     *
+     * This function has one exceptional case; the identity point of
+     * the Edwards curve is sent to the 2-torsion point \\((0,0)\\)
+     * on the Montgomery curve.
+     *
+     * Note that this is a one-way conversion, since the Montgomery
+     * model does not retain sign information.
+     */
     fun toMontgomery(): MontgomeryPoint {
         // We have u = (1+y)/(1-y) = (Z+Y)/(Z-Y).
         //
@@ -24,6 +26,6 @@ data class EdwardsPoint(
         val u = z + y
         val w = z - y
         val uw = u * w.invert()
-        return MontgomeryPoint(uw.toBytes())
+        return MontgomeryPoint(uw.toByteArray())
     }
 }

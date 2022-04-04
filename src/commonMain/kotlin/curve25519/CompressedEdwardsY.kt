@@ -7,7 +7,7 @@ class CompressedEdwardsY constructor(
 ) {
 
     fun decompress(): EdwardsPoint? {
-        val y = FieldElement.fromBytes(data)
+        val y = FieldElement.fromByteArray(data)
         val z = FieldElement.one()
         val yy = y.square()
         // u = y²-1

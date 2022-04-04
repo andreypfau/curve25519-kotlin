@@ -2,16 +2,20 @@
 
 package curve25519
 
+private val MASK_32 = (1uL shl 32) - 1u
+
 internal typealias UBigInt = ULongArray
 
 val UBigInt.lo get() = this[0]
 val UBigInt.hi get() = this[1]
 
-// Add64 returns the sum with carry of x, y and carry: sum = x + y + carry.
-// The carry input must be 0 or 1; otherwise the behavior is undefined.
-// The carryOut output is guaranteed to be 0 or 1.
-//
-// This function's execution time does not depend on the inputs.
+/**
+ * @return the sum with carry of x, y and carry: sum = x + y + carry.
+ * The carry input must be 0 or 1; otherwise the behavior is undefined.
+ * The carryOut output is guaranteed to be 0 or 1.
+ *
+ * This function's execution time does not depend on the inputs.
+ */
 internal fun add64(x: ULong, y: ULong, carry: ULong): ULongArray {
     val sum = x + y + carry
     // The sum will overflow if both top bits are set (x & y) or if one of them
@@ -29,13 +33,13 @@ internal fun addMul64(v: UBigInt, a: ULong, b: ULong): UBigInt {
 }
 
 internal fun mul64(x: ULong, y: ULong): UBigInt {
-    val x0 = x and FieldElement.mask32
+    val x0 = x and MASK_32
     val x1 = x shr 32
-    val y0 = y and FieldElement.mask32
+    val y0 = y and MASK_32
     val y1 = y shr 32
     val w0 = x0 * y0
     val t = x1 * y0 + (w0 shr 32)
-    var w1 = t and FieldElement.mask32
+    var w1 = t and MASK_32
     val w2 = t shr 32
     w1 += x0 * y1
     return ulongArrayOf(

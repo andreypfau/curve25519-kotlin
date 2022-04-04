@@ -18,8 +18,9 @@ class MontgomeryPoint(
     /**
      * Convert this [MontgomeryPoint] to an array of bytes.
      */
-    fun toBytes(bytes: ByteArray = ByteArray(32)) = bytes.apply {
+    fun toByteArray(bytes: ByteArray = ByteArray(32)): ByteArray {
         value.copyInto(bytes)
+        return bytes
     }
 
     /**
@@ -31,7 +32,7 @@ class MontgomeryPoint(
      * - [EdwardsPoint] if `this` is the `(u)`-coordinate of a point on (the Montgomery form of) Curve25519;
      * - `null` if `this` is the `(u)`-coordinate of a point on the twist of (the Montgomery form of) Curve25519;
      */
-    fun toEdwards(sign: Int): EdwardsPoint? {
+    fun toEdwardsPoint(sign: Int): EdwardsPoint? {
         // To decompress the Montgomery u coordinate to an
         // `EdwardsPoint`, we apply the birational map to obtain the
         // Edwards y coordinate, then do Edwards decompression.
@@ -45,13 +46,13 @@ class MontgomeryPoint(
         //
         // Since this is nonsquare mod p, u = -1 corresponds to a point
         // on the twist, not the curve, so we can reject it early.
-        val u = FieldElement.fromBytes(value)
+        val u = FieldElement.fromByteArray(value)
         if (u == FieldElement.minusOne()) {
             return null
         }
         val one = FieldElement.one()
         val y = (u - one) * (u + one).invert()
-        val yBytes = y.toBytes()
+        val yBytes = y.toByteArray()
         yBytes[31] = yBytes[31] xor (sign shl 7).toByte()
 
         return CompressedEdwardsY(yBytes).decompress()
