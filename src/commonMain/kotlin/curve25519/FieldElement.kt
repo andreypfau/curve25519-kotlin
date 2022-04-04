@@ -2,7 +2,10 @@
 
 package curve25519
 
-class FieldElement(
+import kotlin.jvm.JvmInline
+
+@JvmInline
+value class FieldElement(
     val data: ULongArray,
 ) {
     operator fun get(index: Int): ULong = data[index]
@@ -438,39 +441,7 @@ class FieldElement(
 
     fun isNegative(): Boolean = (toByteArray()[0].toInt() and 1) != 0
 
-    fun absolute(): FieldElement = select(-this, isNegative())
-
-    fun select(a: FieldElement, condition: Boolean): FieldElement {
-        val b = this
-        val m = if (condition) 0xFFFFFFFFFFFFFFFFu else 0uL
-
-        val ma0 = (m and a[0])
-        val mb0 = (m.inv() and b[0])
-
-        val v = ulongArrayOf(
-            ma0 or mb0,
-            (m and a[1]) or (m.inv() and b[1]),
-            (m and a[2]) or (m.inv() and b[2]),
-            (m and a[3]) or (m.inv() and b[3]),
-            (m and a[4]) or (m.inv() and b[4])
-        )
-        return FieldElement(v)
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
-
-        other as FieldElement
-
-        if (!data.contentEquals(other.data)) return false
-
-        return true
-    }
-
-    override fun hashCode() = data.contentHashCode()
-
-    override fun toString() = "FieldElement(${data.joinToString()})"
+    fun absolute(): FieldElement = conditionalSelect(-this, this, isNegative())
 
     companion object {
         /**
@@ -543,12 +514,12 @@ internal fun FieldElement.Companion.sqrtRatio(u: FieldElement, v: FieldElement):
     val check = v * r.square()
 
     val uNeg = -u
-    val correctSignSqrt = check == u
-    val flippedSignSqrt = check == uNeg
-    val flippedSignSqrtI = check == (uNeg * SQRT_M1)
+    val correctSignSqrt = check.data.contentEquals(u.data)
+    val flippedSignSqrt = check.data.contentEquals(uNeg.data)
+    val flippedSignSqrtI = check.data.contentEquals((uNeg * SQRT_M1).data)
 
     val rPrime = r * SQRT_M1
-    r = r.select(rPrime, flippedSignSqrt || flippedSignSqrtI)
+    r = conditionalSelect(rPrime, r, flippedSignSqrt || flippedSignSqrtI)
     r = r.absolute()
 
     return r to (correctSignSqrt || flippedSignSqrt)
@@ -595,3 +566,18 @@ private fun reduce(a: ULongArray): ULongArray {
     return a
 }
 
+internal fun conditionalSelect(a: FieldElement, b: FieldElement, condition: Boolean): FieldElement {
+    val m = if (condition) 0xFFFFFFFFFFFFFFFFu else 0uL
+
+    val ma0 = (m and a[0])
+    val mb0 = (m.inv() and b[0])
+
+    val v = ulongArrayOf(
+        ma0 or mb0,
+        (m and a[1]) or (m.inv() and b[1]),
+        (m and a[2]) or (m.inv() and b[2]),
+        (m and a[3]) or (m.inv() and b[3]),
+        (m and a[4]) or (m.inv() and b[4])
+    )
+    return FieldElement(v)
+}

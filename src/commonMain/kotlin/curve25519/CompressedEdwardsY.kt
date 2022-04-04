@@ -16,7 +16,7 @@ class CompressedEdwardsY constructor(
         val (xx, isValidCoordY) = FieldElement.sqrtRatio(u, v)
 
         if (!isValidCoordY) return null
-        val x = xx.select(-xx, (data[31].toInt() shr 7) != 0)
+        val x = conditionalSelect(-xx, xx, (data[31].toInt() shr 7) != 0)
         val t = x * y
         return EdwardsPoint(x, y, z, t)
     }

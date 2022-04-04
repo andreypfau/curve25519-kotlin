@@ -25,3 +25,12 @@ internal val SQRT_M1 = FieldElement(
         1718705420411056u, 234908883556509u, 2233514472574048u, 2117202627021982u, 765476049583133u
     )
 )
+
+/**
+ * APLUS2_OVER_FOUR is (A+2)/4. (This is used internally within the Montgomery ladder.)
+ */
+internal val APLUS2_OVER_FOUR = FieldElement(
+    ulongArrayOf(
+        121666u, 0u, 0u, 0u, 0u
+    )
+)

@@ -1,6 +1,9 @@
+@file:Suppress("OPT_IN_USAGE")
+
 package curve25519
 
 import kotlin.experimental.xor
+import kotlin.jvm.JvmInline
 
 /**
  * Scalar multiplication on the Montgomery form of Curve25519.
@@ -12,15 +15,16 @@ import kotlin.experimental.xor
  * which discards sign information and unifies the curve and its quadratic twist.
  * See [_Montgomery curves and their arithmetic_](https://eprint.iacr.org/2017/212.pdf) by Costello and Smith for more details.
  */
-class MontgomeryPoint(
+@JvmInline
+value class MontgomeryPoint(
     val value: ByteArray = ByteArray(32),
 ) {
     /**
      * Convert this [MontgomeryPoint] to an array of bytes.
      */
-    fun toByteArray(bytes: ByteArray = ByteArray(32)): ByteArray {
-        value.copyInto(bytes)
-        return bytes
+    fun toByteArray(output: ByteArray = ByteArray(32)): ByteArray {
+        value.copyInto(output)
+        return output
     }
 
     /**
@@ -47,7 +51,7 @@ class MontgomeryPoint(
         // Since this is nonsquare mod p, u = -1 corresponds to a point
         // on the twist, not the curve, so we can reject it early.
         val u = FieldElement(value)
-        if (u == FieldElement.minusOne()) {
+        if (u.data.contentEquals(FieldElement.minusOne().data)) {
             return null
         }
         val one = FieldElement.one()
