@@ -17,7 +17,7 @@ data class EdwardsPoint(
      * Note that this is a one-way conversion, since the Montgomery
      * model does not retain sign information.
      */
-    fun toMontgomery(): MontgomeryPoint {
+    fun toMontgomeryPoint(): MontgomeryPoint {
         // We have u = (1+y)/(1-y) = (Z+Y)/(Z-Y).
         //
         // The denominator is zero only when y=1, the identity point of

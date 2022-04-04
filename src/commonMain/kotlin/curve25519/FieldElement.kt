@@ -5,10 +5,7 @@ package curve25519
 class FieldElement(
     val data: ULongArray,
 ) {
-    operator fun get(index: Int) = data[index]
-    operator fun set(index: Int, value: ULong) {
-        data[index] = value
-    }
+    operator fun get(index: Int): ULong = data[index]
 
     operator fun plus(b: FieldElement): FieldElement {
         val a = this
@@ -19,6 +16,7 @@ class FieldElement(
             a[3] + b[3],
             a[4] + b[4],
         )
+
         reduce(v)
         return FieldElement(v)
     }
@@ -34,8 +32,8 @@ class FieldElement(
         v[2] = (a[2] + 0xFFFFFFFFFFFFEu) - b[2]
         v[3] = (a[3] + 0xFFFFFFFFFFFFEu) - b[3]
         v[4] = (a[4] + 0xFFFFFFFFFFFFEu) - b[4]
-        reduce(v)
 
+        reduce(v)
         return FieldElement(v)
     }
 
@@ -438,9 +436,9 @@ class FieldElement(
         return output
     }
 
-    fun isNegative() = (toByteArray()[0].toInt() and 1) != 0
+    fun isNegative(): Boolean = (toByteArray()[0].toInt() and 1) != 0
 
-    fun absolute() = select(-this, isNegative())
+    fun absolute(): FieldElement = select(-this, isNegative())
 
     fun select(a: FieldElement, condition: Boolean): FieldElement {
         val b = this
@@ -475,15 +473,6 @@ class FieldElement(
     override fun toString() = "FieldElement(${data.joinToString()})"
 
     companion object {
-        private val LOW_51_BIT_MASK = (1uL shl 51) - 1u
-
-        // 2^((p-1)/4), which squared is equal to -1 by Euler's Criterion.
-        private val SQRT_M1 = FieldElement(
-            ulongArrayOf(
-                1718705420411056u, 234908883556509u, 2233514472574048u, 2117202627021982u, 765476049583133u
-            )
-        )
-
         /**
          * Construct zero.
          */
@@ -506,104 +495,103 @@ class FieldElement(
                 2251799813685247u
             )
         )
-
-        fun sqrtRatio(u: FieldElement, v: FieldElement): Pair<FieldElement, Boolean> {
-            // Using the same trick as in ed25519 decoding, we merge the
-            // inversion, the square root, and the square test as follows.
-            //
-            // To compute sqrt(α), we can compute β = α^((p+3)/8).
-            // Then β^2 = ±α, so multiplying β by sqrt(-1) if necessary
-            // gives sqrt(α).
-            //
-            // To compute 1/sqrt(α), we observe that
-            //    1/β = α^(p-1 - (p+3)/8) = α^((7p-11)/8)
-            //                            = α^3 * (α^7)^((p-5)/8).
-            //
-            // We can therefore compute sqrt(u/v) = sqrt(u)/sqrt(v)
-            // by first computing
-            //    r = u^((p+3)/8) v^(p-1-(p+3)/8)
-            //      = u u^((p-5)/8) v^3 (v^7)^((p-5)/8)
-            //      = (u * v^3) (u * v^7)^((p-5)/8).
-            //
-            // If v is nonzero and u/v is square, then r^2 = ±u/v,
-            //                                     so vr^2 = ±u.
-            // If vr^2 =  u, then sqrt(u/v) = r.
-            // If vr^2 = -u, then sqrt(u/v) = r*sqrt(-1).
-            //
-            // If v is zero, r is also zero.
-
-            // r = (u * v^3) (u * v^7)^((p-5)/8)
-            val v3 = v.square() * v
-            val v7 = v3.square() * v
-            var r = (u * v3) * (u * v7).pow25523()
-
-            val check = v * r.square()
-
-            val uNeg = -u
-            val correctSignSqrt = check == u
-            val flippedSignSqrt = check == uNeg
-            val flippedSignSqrtI = check == (uNeg * SQRT_M1)
-
-            val rPrime = r * SQRT_M1
-            r = r.select(rPrime, flippedSignSqrt || flippedSignSqrtI)
-            r = r.absolute()
-
-            return r to (correctSignSqrt || flippedSignSqrt)
-        }
-
-        fun fromByteArray(input: ByteArray): FieldElement {
-            require(input.size == 5) { "input.size == 5" }
-            return FieldElement(
-                ulongArrayOf(
-                    load8(input, 0) and LOW_51_BIT_MASK,
-                    (load8(input, 6) shr 3) and LOW_51_BIT_MASK,
-                    (load8(input, 12) shr 6) and LOW_51_BIT_MASK,
-                    (load8(input, 19) shr 1) and LOW_51_BIT_MASK,
-                    (load8(input, 24) shr 12) and LOW_51_BIT_MASK,
-                )
-            )
-        }
-
-        private fun load8(byteArray: ByteArray, offset: Int): ULong {
-            return (byteArray[offset].toULong() and 0xFFu) or
-                    ((byteArray[offset + 1].toULong() and 0xFFu) shl 8) or
-                    ((byteArray[offset + 2].toULong() and 0xFFu) shl 16) or
-                    ((byteArray[offset + 3].toULong() and 0xFFu) shl 24) or
-                    ((byteArray[offset + 4].toULong() and 0xFFu) shl 32) or
-                    ((byteArray[offset + 5].toULong() and 0xFFu) shl 40) or
-                    ((byteArray[offset + 6].toULong() and 0xFFu) shl 48) or
-                    ((byteArray[offset + 7].toULong() and 0xFFu) shl 56)
-        }
-
-        /**
-         * Since the input limbs are bounded by 2^64, the biggest
-         * carry-out is bounded by 2^13.
-         *
-         * The biggest carry-in is c4 * 19, resulting in
-         *
-         * 2^51 + 19*2^13 < 2^51.0000000001
-         *
-         * Because we don't need to canonicalize, only to reduce the
-         * limb sizes, it's OK to do a "weak reduction", where we
-         * compute the carry-outs in parallel.
-         */
-        private fun reduce(a: ULongArray): ULongArray {
-            val c0 = a[0] shr 51
-            val c1 = a[1] shr 51
-            val c2 = a[2] shr 51
-            val c3 = a[3] shr 51
-            val c4 = a[4] shr 51
-
-            // c4 is at most 64 - 51 = 13 bits, so c4*19 is at most 18 bits, and
-            // the final l0 will be at most 52 bits. Similarly for the rest.
-            a[0] = (a[0] and LOW_51_BIT_MASK) + c4 * 19u
-            a[1] = (a[1] and LOW_51_BIT_MASK) + c0
-            a[2] = (a[2] and LOW_51_BIT_MASK) + c1
-            a[3] = (a[3] and LOW_51_BIT_MASK) + c2
-            a[4] = (a[4] and LOW_51_BIT_MASK) + c3
-
-            return a
-        }
     }
+}
+
+fun FieldElement(input: ByteArray): FieldElement {
+    return FieldElement(
+        ulongArrayOf(
+            load8(input, 0) and LOW_51_BIT_MASK,
+            (load8(input, 6) shr 3) and LOW_51_BIT_MASK,
+            (load8(input, 12) shr 6) and LOW_51_BIT_MASK,
+            (load8(input, 19) shr 1) and LOW_51_BIT_MASK,
+            (load8(input, 24) shr 12) and LOW_51_BIT_MASK,
+        )
+    )
+}
+
+internal fun FieldElement.Companion.sqrtRatio(u: FieldElement, v: FieldElement): Pair<FieldElement, Boolean> {
+    // Using the same trick as in ed25519 decoding, we merge the
+    // inversion, the square root, and the square test as follows.
+    //
+    // To compute sqrt(α), we can compute β = α^((p+3)/8).
+    // Then β^2 = ±α, so multiplying β by sqrt(-1) if necessary
+    // gives sqrt(α).
+    //
+    // To compute 1/sqrt(α), we observe that
+    //    1/β = α^(p-1 - (p+3)/8) = α^((7p-11)/8)
+    //                            = α^3 * (α^7)^((p-5)/8).
+    //
+    // We can therefore compute sqrt(u/v) = sqrt(u)/sqrt(v)
+    // by first computing
+    //    r = u^((p+3)/8) v^(p-1-(p+3)/8)
+    //      = u u^((p-5)/8) v^3 (v^7)^((p-5)/8)
+    //      = (u * v^3) (u * v^7)^((p-5)/8).
+    //
+    // If v is nonzero and u/v is square, then r^2 = ±u/v,
+    //                                     so vr^2 = ±u.
+    // If vr^2 =  u, then sqrt(u/v) = r.
+    // If vr^2 = -u, then sqrt(u/v) = r*sqrt(-1).
+    //
+    // If v is zero, r is also zero.
+
+    // r = (u * v^3) (u * v^7)^((p-5)/8)
+    val v3 = v.square() * v
+    val v7 = v3.square() * v
+    var r = (u * v3) * (u * v7).pow25523()
+
+    val check = v * r.square()
+
+    val uNeg = -u
+    val correctSignSqrt = check == u
+    val flippedSignSqrt = check == uNeg
+    val flippedSignSqrtI = check == (uNeg * SQRT_M1)
+
+    val rPrime = r * SQRT_M1
+    r = r.select(rPrime, flippedSignSqrt || flippedSignSqrtI)
+    r = r.absolute()
+
+    return r to (correctSignSqrt || flippedSignSqrt)
+}
+
+private fun load8(byteArray: ByteArray, offset: Int): ULong {
+    return (byteArray[offset].toULong() and 0xFFu) or
+            ((byteArray[offset + 1].toULong() and 0xFFu) shl 8) or
+            ((byteArray[offset + 2].toULong() and 0xFFu) shl 16) or
+            ((byteArray[offset + 3].toULong() and 0xFFu) shl 24) or
+            ((byteArray[offset + 4].toULong() and 0xFFu) shl 32) or
+            ((byteArray[offset + 5].toULong() and 0xFFu) shl 40) or
+            ((byteArray[offset + 6].toULong() and 0xFFu) shl 48) or
+            ((byteArray[offset + 7].toULong() and 0xFFu) shl 56)
+}
+
+/**
+ * Since the input limbs are bounded by 2^64, the biggest
+ * carry-out is bounded by 2^13.
+ *
+ * The biggest carry-in is c4 * 19, resulting in
+ *
+ * 2^51 + 19*2^13 < 2^51.0000000001
+ *
+ * Because we don't need to canonicalize, only to reduce the
+ * limb sizes, it's OK to do a "weak reduction", where we
+ * compute the carry-outs in parallel.
+ */
+private fun reduce(a: ULongArray): ULongArray {
+    val c0 = a[0] shr 51
+    val c1 = a[1] shr 51
+    val c2 = a[2] shr 51
+    val c3 = a[3] shr 51
+    val c4 = a[4] shr 51
+
+    // c4 is at most 64 - 51 = 13 bits, so c4*19 is at most 18 bits, and
+    // the final l0 will be at most 52 bits. Similarly for the rest.
+    a[0] = (a[0] and LOW_51_BIT_MASK) + c4 * 19u
+    a[1] = (a[1] and LOW_51_BIT_MASK) + c0
+    a[2] = (a[2] and LOW_51_BIT_MASK) + c1
+    a[3] = (a[3] and LOW_51_BIT_MASK) + c2
+    a[4] = (a[4] and LOW_51_BIT_MASK) + c3
+
+    return a
 }
 

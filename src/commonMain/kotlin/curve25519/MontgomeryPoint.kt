@@ -13,7 +13,7 @@ import kotlin.experimental.xor
  * See [_Montgomery curves and their arithmetic_](https://eprint.iacr.org/2017/212.pdf) by Costello and Smith for more details.
  */
 class MontgomeryPoint(
-    val value: ByteArray = ByteArray(32)
+    val value: ByteArray = ByteArray(32),
 ) {
     /**
      * Convert this [MontgomeryPoint] to an array of bytes.
@@ -46,7 +46,7 @@ class MontgomeryPoint(
         //
         // Since this is nonsquare mod p, u = -1 corresponds to a point
         // on the twist, not the curve, so we can reject it early.
-        val u = FieldElement.fromByteArray(value)
+        val u = FieldElement(value)
         if (u == FieldElement.minusOne()) {
             return null
         }
