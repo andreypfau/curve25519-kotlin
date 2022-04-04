@@ -482,8 +482,28 @@ class FieldElement(
             )
         )
 
+        /**
+         * Construct zero.
+         */
         fun zero() = FieldElement(ulongArrayOf(0u, 0u, 0u, 0u, 0u))
+
+        /**
+         * Construct one.
+         */
         fun one() = FieldElement(ulongArrayOf(1u, 0u, 0u, 0u, 0u))
+
+        /**
+         * Construct -1.
+         */
+        fun minusOne() = FieldElement(
+            ulongArrayOf(
+                2251799813685228u,
+                2251799813685247u,
+                2251799813685247u,
+                2251799813685247u,
+                2251799813685247u
+            )
+        )
 
         fun sqrtRatio(u: FieldElement, v: FieldElement): Pair<FieldElement, Boolean> {
             // Using the same trick as in ed25519 decoding, we merge the

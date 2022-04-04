@@ -2,7 +2,7 @@
 
 package curve25519
 
-class CompressedEdwardsY private constructor(
+class CompressedEdwardsY constructor(
     val data: ByteArray = ByteArray(32)
 ) {
 
