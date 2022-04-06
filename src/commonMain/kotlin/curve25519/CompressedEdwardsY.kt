@@ -20,4 +20,9 @@ class CompressedEdwardsY constructor(
         val t = x * y
         return EdwardsPoint(x, y, z, t)
     }
+
+    fun toByteArray(output: ByteArray = ByteArray(32)): ByteArray {
+        data.copyInto(output)
+        return output
+    }
 }
