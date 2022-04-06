@@ -1,5 +1,7 @@
 package curve25519
 
+import kotlin.experimental.xor
+
 data class EdwardsPoint(
     val x: FieldElement,
     val y: FieldElement,
@@ -27,5 +29,17 @@ data class EdwardsPoint(
         val w = z - y
         val uw = u * w.invert()
         return MontgomeryPoint(uw.toByteArray())
+    }
+
+    /**
+     * Compress this point to CompressedEdwardsY format.
+     */
+    fun compress(): CompressedEdwardsY {
+        val recip = z.invert()
+        val x = y * recip
+        val y = y * recip
+        val s = y.toByteArray()
+        s[31] = s[31] xor ((if (x.isNegative()) 1 else 0) shl 7).toByte()
+        return CompressedEdwardsY(s)
     }
 }
