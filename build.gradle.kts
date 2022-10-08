@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("multiplatform")
     `maven-publish`
@@ -11,8 +13,8 @@ allprojects {
     apply(plugin = "maven-publish")
 
     repositories {
-        mavenCentral()
         mavenLocal()
+        mavenCentral()
     }
 
     kotlin {
@@ -28,14 +30,11 @@ allprojects {
         macosArm64()
         macosX64()
         linuxX64()
-        linuxArm64()
         mingwX64()
         sourceSets {
             val commonMain by getting {
                 dependencies {
-                    subprojects {
-                        api(this)
-                    }
+                    api("com.github.andreypfau:kotlinio-crypto:+")
                 }
             }
             val commonTest by getting {

@@ -1,27 +1,31 @@
 @file:Suppress("OPT_IN_USAGE")
 
-package com.github.andreypfau.curve25519
+package com.github.andreypfau.curve25519.field
 
-import kotlin.jvm.JvmInline
+import com.github.andreypfau.curve25519.*
+import com.github.andreypfau.curve25519.constants.LOW_51_BIT_MASK
+import com.github.andreypfau.curve25519.constants.SQRT_M1
+import com.github.andreypfau.kotlinio.crypto.ct.*
+import com.github.andreypfau.kotlinio.crypto.ct.equals.*
+import com.github.andreypfau.kotlinio.crypto.ct.negate.*
+import com.github.andreypfau.kotlinio.crypto.ct.select.*
 
-@JvmInline
-value class FieldElement(
+data class FieldElement(
     val data: ULongArray,
-) {
+) : ConditionallySelectable<FieldElement>, Identity<FieldElement>, ConditionallyNegatable<FieldElement> {
+    constructor() : this(0u, 0u, 0u, 0u, 0u)
+    constructor(f0: ULong, f1: ULong, f2: ULong, f3: ULong, f4: ULong) : this(
+        ulongArrayOf(f0, f1, f2, f3, f4)
+    )
+
     operator fun get(index: Int): ULong = data[index]
 
-    operator fun plus(b: FieldElement): FieldElement {
-        val a = this
-        val v = ulongArrayOf(
-            a[0] + b[0],
-            a[1] + b[1],
-            a[2] + b[2],
-            a[3] + b[3],
-            a[4] + b[4],
-        )
-
-        reduce(v)
-        return FieldElement(v)
+    operator fun plus(other: FieldElement): FieldElement {
+        val output = FieldElement()
+        for (i in 0 until 5) {
+            output.data[i] = data[i] + other.data[i]
+        }
+        return output
     }
 
     operator fun minus(b: FieldElement): FieldElement {
@@ -40,7 +44,10 @@ value class FieldElement(
         return FieldElement(v)
     }
 
-    operator fun unaryMinus(): FieldElement = zero() - this
+    override operator fun unaryMinus(): FieldElement = ZERO - this
+
+    override fun conditionalNegate(choise: Choise): FieldElement =
+        conditionalSelect(-this, choise)
 
     /**
      * Limb multiplication works like pen-and-paper columnar multiplication, but
@@ -163,11 +170,11 @@ value class FieldElement(
         val c4 = shiftRightBy51(r4)
 
         val v = ulongArrayOf(
-            (r0.lo and LOW_51_BIT_MASK) + c4 * 19u,
-            (r1.lo and LOW_51_BIT_MASK) + c0,
-            (r2.lo and LOW_51_BIT_MASK) + c1,
-            (r3.lo and LOW_51_BIT_MASK) + c2,
-            (r4.lo and LOW_51_BIT_MASK) + c3,
+            (r0.upper and LOW_51_BIT_MASK) + c4 * 19u,
+            (r1.upper and LOW_51_BIT_MASK) + c0,
+            (r2.upper and LOW_51_BIT_MASK) + c1,
+            (r3.upper and LOW_51_BIT_MASK) + c2,
+            (r4.upper and LOW_51_BIT_MASK) + c3,
         )
         // Now all coefficients fit into 64-bit registers but are still too large to
         // be passed around as a Element. We therefore do one last carry chain,
@@ -253,14 +260,22 @@ value class FieldElement(
         val c4 = shiftRightBy51(r4)
 
         val v = ULongArray(5)
-        v[0] = (r0.lo and LOW_51_BIT_MASK) + c4 * 19u
-        v[1] = (r1.lo and LOW_51_BIT_MASK) + c0
-        v[2] = (r2.lo and LOW_51_BIT_MASK) + c1
-        v[3] = (r3.lo and LOW_51_BIT_MASK) + c2
-        v[4] = (r4.lo and LOW_51_BIT_MASK) + c3
+        v[0] = (r0.upper and LOW_51_BIT_MASK) + c4 * 19u
+        v[1] = (r1.upper and LOW_51_BIT_MASK) + c0
+        v[2] = (r2.upper and LOW_51_BIT_MASK) + c1
+        v[3] = (r3.upper and LOW_51_BIT_MASK) + c2
+        v[4] = (r4.upper and LOW_51_BIT_MASK) + c3
         reduce(v)
 
         return FieldElement(v)
+    }
+
+    fun square2(): FieldElement {
+        val square = square()
+        for (i in 0..4) {
+            square.data[i] *= 2uL
+        }
+        return square
     }
 
     fun invert(): FieldElement {
@@ -443,16 +458,55 @@ value class FieldElement(
 
     fun absolute(): FieldElement = conditionalSelect(-this, this, isNegative())
 
+    override fun conditionalSelect(other: FieldElement, choise: Choise): FieldElement =
+        FieldElement(
+            data[0].conditionalSelect(other.data[0], choise),
+            data[1].conditionalSelect(other.data[1], choise),
+            data[2].conditionalSelect(other.data[2], choise),
+            data[3].conditionalSelect(other.data[3], choise),
+            data[4].conditionalSelect(other.data[4], choise)
+        )
+
+    override fun ctEquals(other: FieldElement): Choise = data ctEquals other.data
+
+    override fun identity() = IDENTITY
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is FieldElement) return false
+        return ctEquals(other) == Choise.TRUE
+    }
+
+    override fun hashCode(): Int = data.contentHashCode()
+
+    override fun toString(): String = buildString {
+        append("FieldElement{")
+        append(data.contentToString())
+        append("}")
+    }
+
     companion object {
+        val IDENTITY = FieldElement()
+        val ZERO = FieldElement(ulongArrayOf(0u, 0u, 0u, 0u, 0u))
+        val ONE = FieldElement(ulongArrayOf(1u, 0u, 0u, 0u, 0u))
+
         /**
          * Construct zero.
          */
-        fun zero() = FieldElement(ulongArrayOf(0u, 0u, 0u, 0u, 0u))
+        @Deprecated(
+            message = "Use FieldElement.ZERO", replaceWith =
+            ReplaceWith("ZERO", "com.github.andreypfau.curve25519.field.FieldElement.Companion.ZERO")
+        )
+        fun zero() = ZERO.copy(data = ZERO.data.copyOf())
 
         /**
          * Construct one.
          */
-        fun one() = FieldElement(ulongArrayOf(1u, 0u, 0u, 0u, 0u))
+        @Deprecated(
+            message = "Use FieldElement.ONE", replaceWith =
+            ReplaceWith("ONE", "com.github.andreypfau.curve25519.field.FieldElement.Companion.ONE")
+        )
+        fun one() = ONE.copy(data = ONE.data.copyOf())
 
         /**
          * Construct -1.

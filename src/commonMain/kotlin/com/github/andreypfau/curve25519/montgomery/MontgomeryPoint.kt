@@ -1,7 +1,10 @@
 @file:Suppress("OPT_IN_USAGE")
 
-package com.github.andreypfau.curve25519
+package com.github.andreypfau.curve25519.montgomery
 
+import com.github.andreypfau.curve25519.field.FieldElement
+import com.github.andreypfau.curve25519.edwards.CompressedEdwardsY
+import com.github.andreypfau.curve25519.edwards.EdwardsPoint
 import kotlin.experimental.xor
 import kotlin.jvm.JvmInline
 
