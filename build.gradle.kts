@@ -12,24 +12,24 @@ allprojects {
 
     repositories {
         mavenCentral()
+        mavenLocal()
     }
 
     kotlin {
         jvm {
             withJava()
             compilations.all {
-                kotlinOptions.jvmTarget = "11"
+                kotlinOptions.jvmTarget = "1.8"
             }
             testRuns["test"].executionTask.configure {
                 useJUnitPlatform()
             }
         }
-//        linuxX64()
-//        macosX64()
-//        js {
-//            useCommonJs()
-//            browser()
-//        }
+        macosArm64()
+        macosX64()
+        linuxX64()
+        linuxArm64()
+        mingwX64()
         sourceSets {
             val commonMain by getting {
                 dependencies {
