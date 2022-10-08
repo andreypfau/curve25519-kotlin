@@ -1,6 +1,6 @@
 @file:Suppress("OPT_IN_USAGE")
 
-package curve25519
+package com.github.andreypfau.curve25519
 
 private val MASK_32 = (1uL shl 32) - 1u
 

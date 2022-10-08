@@ -1,6 +1,6 @@
 @file:Suppress("OPT_IN_USAGE")
 
-package curve25519
+package com.github.andreypfau.curve25519
 
 internal val LOW_51_BIT_MASK = (1uL shl 51) - 1u
 

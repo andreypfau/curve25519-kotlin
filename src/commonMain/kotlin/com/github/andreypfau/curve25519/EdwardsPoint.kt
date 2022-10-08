@@ -1,4 +1,4 @@
-package curve25519
+package com.github.andreypfau.curve25519
 
 import kotlin.experimental.xor
 

@@ -1,6 +1,6 @@
 @file:Suppress("OPT_IN_USAGE")
 
-package curve25519
+package com.github.andreypfau.curve25519
 
 import kotlin.jvm.JvmInline
 
