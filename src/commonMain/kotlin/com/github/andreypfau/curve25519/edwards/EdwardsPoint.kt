@@ -1,12 +1,12 @@
 package com.github.andreypfau.curve25519.edwards
 
-import com.github.andreypfau.curve25519.AffineNielsPoint
-import com.github.andreypfau.curve25519.CompletedPoint
 import com.github.andreypfau.curve25519.Identity
-import com.github.andreypfau.curve25519.ProjectivePoint
 import com.github.andreypfau.curve25519.constants.EDWARDS_D2
 import com.github.andreypfau.curve25519.field.FieldElement
+import com.github.andreypfau.curve25519.models.AffineNielsPoint
+import com.github.andreypfau.curve25519.models.CompletedPoint
 import com.github.andreypfau.curve25519.models.ProjectiveNielsPoint
+import com.github.andreypfau.curve25519.models.ProjectivePoint
 import com.github.andreypfau.curve25519.montgomery.MontgomeryPoint
 import com.github.andreypfau.curve25519.scalar.Scalar
 import com.github.andreypfau.curve25519.scalar.mul
@@ -14,10 +14,10 @@ import com.github.andreypfau.kotlinio.crypto.ct.Choise
 import kotlin.experimental.xor
 
 data class EdwardsPoint(
-    val x: FieldElement = FieldElement.zero(),
-    val y: FieldElement = FieldElement.one(),
-    val z: FieldElement = FieldElement.one(),
-    val t: FieldElement = FieldElement.zero(),
+    val x: FieldElement = FieldElement.ZERO,
+    val y: FieldElement = FieldElement.ONE,
+    val z: FieldElement = FieldElement.ONE,
+    val t: FieldElement = FieldElement.ZERO,
 ) : Identity<EdwardsPoint> {
 
     /**

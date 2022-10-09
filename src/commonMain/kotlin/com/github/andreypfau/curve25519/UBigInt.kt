@@ -10,6 +10,8 @@ private val MASK_32 = (1uL shl 32) - 1u
 value class UBigInt(
     val data: ULongArray
 ) {
+    constructor(long: ULong) : this(ulongArrayOf(long, 0u))
+
     var upper
         get() = this.data[0]
         private set(value) {

@@ -1,4 +1,4 @@
-package com.github.andreypfau.curve25519
+package com.github.andreypfau.curve25519.models
 
 import com.github.andreypfau.curve25519.edwards.EdwardsPoint
 import com.github.andreypfau.curve25519.field.FieldElement

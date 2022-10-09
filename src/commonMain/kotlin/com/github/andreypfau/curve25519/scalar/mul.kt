@@ -1,8 +1,9 @@
 package com.github.andreypfau.curve25519.scalar
 
-import com.github.andreypfau.curve25519.ProjectivePoint
+import com.github.andreypfau.curve25519.UBigInt
 import com.github.andreypfau.curve25519.edwards.EdwardsPoint
 import com.github.andreypfau.curve25519.models.ProjectiveNielsPoint
+import com.github.andreypfau.curve25519.models.ProjectivePoint
 
 internal inline fun mul(point: EdwardsPoint, scalar: Scalar): EdwardsPoint {
     // Construct a lookup table of [P,2P,3P,4P,5P,6P,7P,8P]
@@ -41,3 +42,5 @@ internal inline fun mul(point: EdwardsPoint, scalar: Scalar): EdwardsPoint {
     }
     return tmp1.toExtended()
 }
+
+internal inline fun m(x: ULong, y: ULong): UBigInt = UBigInt(x) * UBigInt(y)

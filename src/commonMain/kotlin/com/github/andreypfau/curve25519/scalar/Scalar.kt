@@ -4,6 +4,7 @@ import com.github.andreypfau.curve25519.edwards.EdwardsBasepointTable
 import com.github.andreypfau.curve25519.edwards.EdwardsPoint
 import kotlin.experimental.and
 import kotlin.jvm.JvmInline
+import kotlin.random.Random
 
 /**
  * The [Scalar] holds an integer `s < 2^255` which represents an element of `Z / l`.
@@ -35,6 +36,8 @@ value class Scalar(
     )
 
     operator fun times(table: EdwardsBasepointTable): EdwardsPoint = table * this
+
+    operator fun times(point: EdwardsPoint): EdwardsPoint = point * this
 
     /**
      * Write this scalar in radix 16, with coefficients in \([-8,8)\), i.e.,
@@ -76,9 +79,14 @@ value class Scalar(
             )
         )
 
-        fun fromBytesModOrder(bytes: ByteArray) {
-            val sUnreduced = Scalar(bytes)
-            val s = sUnreduced.reduce()
+        fun random(random: Random): Scalar {
+            random.nextBytes(64)
+            TODO()
         }
+
+        fun fromBytesModOrderWide(bytes: ByteArray) {
+//            UnpackedScalar.fromBytes()
+        }
+
     }
 }

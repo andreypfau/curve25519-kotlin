@@ -9,10 +9,9 @@ import com.github.andreypfau.kotlinio.crypto.ct.*
 import com.github.andreypfau.kotlinio.crypto.ct.equals.*
 import com.github.andreypfau.kotlinio.crypto.ct.negate.*
 import com.github.andreypfau.kotlinio.crypto.ct.select.*
-import kotlin.experimental.and
 
 data class FieldElement(
-    val data: ULongArray,
+    internal val data: ULongArray,
 ) : ConditionallySelectable<FieldElement>, Identity<FieldElement>, ConditionallyNegatable<FieldElement> {
     constructor() : this(0u, 0u, 0u, 0u, 0u)
     constructor(f0: ULong, f1: ULong, f2: ULong, f3: ULong, f4: ULong) : this(
@@ -493,29 +492,7 @@ data class FieldElement(
         val IDENTITY = FieldElement()
         val ZERO = FieldElement(ulongArrayOf(0u, 0u, 0u, 0u, 0u))
         val ONE = FieldElement(ulongArrayOf(1u, 0u, 0u, 0u, 0u))
-
-        /**
-         * Construct zero.
-         */
-        @Deprecated(
-            message = "Use FieldElement.ZERO", replaceWith =
-            ReplaceWith("ZERO", "com.github.andreypfau.curve25519.field.FieldElement.Companion.ZERO")
-        )
-        fun zero() = ZERO.copy(data = ZERO.data.copyOf())
-
-        /**
-         * Construct one.
-         */
-        @Deprecated(
-            message = "Use FieldElement.ONE", replaceWith =
-            ReplaceWith("ONE", "com.github.andreypfau.curve25519.field.FieldElement.Companion.ONE")
-        )
-        fun one() = ONE.copy(data = ONE.data.copyOf())
-
-        /**
-         * Construct -1.
-         */
-        fun minusOne() = FieldElement(
+        val MINUS_ONE = FieldElement(
             ulongArrayOf(
                 2251799813685228u,
                 2251799813685247u,

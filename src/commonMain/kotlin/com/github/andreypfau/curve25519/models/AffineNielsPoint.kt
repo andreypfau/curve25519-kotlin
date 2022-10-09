@@ -1,5 +1,6 @@
-package com.github.andreypfau.curve25519
+package com.github.andreypfau.curve25519.models
 
+import com.github.andreypfau.curve25519.Identity
 import com.github.andreypfau.curve25519.field.FieldElement
 import com.github.andreypfau.curve25519.window.LookupTable
 import com.github.andreypfau.kotlinio.crypto.ct.Choise
@@ -11,7 +12,7 @@ data class AffineNielsPoint(
     val yMinusX: FieldElement,
     val xy2d: FieldElement,
 ) : Identity<AffineNielsPoint>, ConditionallySelectable<AffineNielsPoint>, ConditionallyNegatable<AffineNielsPoint> {
-    constructor() : this(FieldElement.one(), FieldElement.one(), FieldElement.zero())
+    constructor() : this(FieldElement.ONE, FieldElement.ONE, FieldElement.ZERO)
 
     override operator fun unaryMinus(): AffineNielsPoint = AffineNielsPoint(
         yPlusX = yMinusX,

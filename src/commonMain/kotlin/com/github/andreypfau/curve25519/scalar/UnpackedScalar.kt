@@ -2,8 +2,6 @@
 
 package com.github.andreypfau.curve25519.scalar
 
-import com.github.andreypfau.curve25519.mul64
-
 class UnpackedScalar(
     val data: ULongArray
 ) {
@@ -32,10 +30,4 @@ class UnpackedScalar(
             )
         }
     }
-}
-
-internal inline fun mulInternal(a: UnpackedScalar, b: UnpackedScalar) {
-    mul64(a[0], b[0])
-    mul64(a[0], b[1]) + mul64(a[1], b[0])
-
 }

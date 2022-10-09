@@ -2,10 +2,10 @@
 
 package com.github.andreypfau.curve25519.constants
 
-import com.github.andreypfau.curve25519.AffineNielsPoint
 import com.github.andreypfau.curve25519.edwards.CompressedEdwardsY
 import com.github.andreypfau.curve25519.edwards.EdwardsPoint
 import com.github.andreypfau.curve25519.field.FieldElement
+import com.github.andreypfau.curve25519.models.AffineNielsPoint
 import com.github.andreypfau.curve25519.scalar.Scalar
 
 internal val LOW_51_BIT_MASK = (1uL shl 51) - 1u

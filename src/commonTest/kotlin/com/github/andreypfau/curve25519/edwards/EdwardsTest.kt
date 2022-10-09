@@ -2,13 +2,10 @@
 
 package com.github.andreypfau.curve25519.edwards
 
-import com.github.andreypfau.curve25519.ProjectivePoint
 import com.github.andreypfau.curve25519.constants.*
-import com.github.andreypfau.curve25519.constants.BASEPOINT_ORDER
-import com.github.andreypfau.curve25519.constants.ED25519_BASEPOINT_COMPRESSED
-import com.github.andreypfau.curve25519.constants.ED25519_BASEPOINT_POINT
-import com.github.andreypfau.curve25519.constants.EDWARDS_D
 import com.github.andreypfau.curve25519.field.FieldElement
+import com.github.andreypfau.curve25519.models.AffineNielsPoint
+import com.github.andreypfau.curve25519.models.ProjectivePoint
 import com.github.andreypfau.curve25519.scalar.Scalar
 import com.github.andreypfau.curve25519.utils.byteArrayOf
 import com.github.andreypfau.kotlinio.crypto.ct.Choise
@@ -264,6 +261,49 @@ class EdwardsTest {
         assertEquals(
             ED25519_BASEPOINT_COMPRESSED,
             ED25519_BASEPOINT_POINT.toProjective().toExtended().compress()
+        )
+    }
+
+    /**
+     * Test computing 16*basepoint vs mulByPow2(4)
+     */
+    @Test
+    fun basepoint16VsMulBy16() {
+        val bp16 = ED25519_BASEPOINT_POINT.mulByPow2(4)
+        assertEquals(BASE16_CMPRSSD, bp16.compress())
+    }
+
+    @Test
+    fun conditionalSelectForAffineNielsPoint() {
+        val id = AffineNielsPoint.IDENTITY
+        var p1 = AffineNielsPoint.IDENTITY
+        val bp = ED25519_BASEPOINT_POINT.toAffineNiels()
+        p1 = p1.conditionalSelect(bp, Choise.FALSE)
+        assertEquals(p1, id)
+        p1 = p1.conditionalSelect(bp, Choise.TRUE)
+        assertEquals(p1, bp)
+    }
+
+    @Test
+    fun compressedIdentity() {
+        assertEquals(CompressedEdwardsY.IDENTITY, EdwardsPoint.IDENTITY.compress())
+    }
+
+    @Test
+    fun isIdentity() {
+        assertTrue(EdwardsPoint.IDENTITY.isIdentity())
+        assertTrue(!ED25519_BASEPOINT_POINT.isIdentity())
+    }
+
+    @Test
+    fun scalarMultExtendedPointWorksBothWays() {
+        val g = ED25519_BASEPOINT_POINT
+        val s = A_SCALAR
+        val p1 = g * s
+        val p2 = s * g
+        assertContentEquals(
+            p1.compress().toByteArray(),
+            p2.compress().toByteArray()
         )
     }
 }

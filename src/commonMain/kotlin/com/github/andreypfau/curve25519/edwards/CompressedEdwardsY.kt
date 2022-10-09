@@ -9,7 +9,7 @@ import com.github.andreypfau.curve25519.field.sqrtRatio
 import com.github.andreypfau.kotlinio.crypto.ct.Choise
 
 data class CompressedEdwardsY constructor(
-    val data: ByteArray = ByteArray(32),
+    internal val data: ByteArray = IDENTITY_BYTES,
 ) {
     fun decompress(): EdwardsPoint? {
         val y = FieldElement(data)
@@ -42,4 +42,14 @@ data class CompressedEdwardsY constructor(
     }
 
     override fun hashCode(): Int = data.contentHashCode()
+
+    companion object {
+        private val IDENTITY_BYTES = byteArrayOf(
+            1, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0
+        )
+        val IDENTITY = CompressedEdwardsY()
+    }
 }

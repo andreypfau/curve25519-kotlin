@@ -2,11 +2,10 @@
 
 package com.github.andreypfau.curve25519.montgomery
 
-import com.github.andreypfau.curve25519.field.FieldElement
 import com.github.andreypfau.curve25519.edwards.CompressedEdwardsY
 import com.github.andreypfau.curve25519.edwards.EdwardsPoint
+import com.github.andreypfau.curve25519.field.FieldElement
 import kotlin.experimental.xor
-import kotlin.jvm.JvmInline
 
 /**
  * Scalar multiplication on the Montgomery form of Curve25519.
@@ -18,9 +17,8 @@ import kotlin.jvm.JvmInline
  * which discards sign information and unifies the curve and its quadratic twist.
  * See [_Montgomery curves and their arithmetic_](https://eprint.iacr.org/2017/212.pdf) by Costello and Smith for more details.
  */
-@JvmInline
-value class MontgomeryPoint(
-    val value: ByteArray = ByteArray(32),
+class MontgomeryPoint(
+    internal val value: ByteArray = ByteArray(32),
 ) {
     /**
      * Convert this [MontgomeryPoint] to an array of bytes.
@@ -54,10 +52,10 @@ value class MontgomeryPoint(
         // Since this is nonsquare mod p, u = -1 corresponds to a point
         // on the twist, not the curve, so we can reject it early.
         val u = FieldElement(value)
-        if (u.data.contentEquals(FieldElement.minusOne().data)) {
+        if (u.data.contentEquals(FieldElement.MINUS_ONE.data)) {
             return null
         }
-        val one = FieldElement.one()
+        val one = FieldElement.ONE
         val y = (u - one) * (u + one).invert()
         val yBytes = y.toByteArray()
         yBytes[31] = yBytes[31] xor (sign shl 7).toByte()
