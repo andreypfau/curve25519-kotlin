@@ -73,12 +73,15 @@ data class EdwardsPoint(
      */
     fun compress(): CompressedEdwardsY {
         val recip = z.invert()
-        val x = y * recip
+        val x = x * recip
         val y = y * recip
         val s = y.toByteArray()
-        s[31] = s[31] xor ((if (x.isNegative()) 1 else 0) shl 7).toByte()
+        s[31] = s[31] xor (x.isNegative().toUByte().toInt() shl 7).toByte()
         return CompressedEdwardsY(s)
     }
+
+    fun double(): EdwardsPoint =
+        toProjective().double().toExtended()
 
     operator fun plus(other: AffineNielsPoint): CompletedPoint {
         val yPlusX = y + x
@@ -151,8 +154,13 @@ data class EdwardsPoint(
      * We have that X = xZ and X' = x'Z'. Thus, x = x' is equivalent to
      * (xZ)Z' = (x'Z')Z, and similarly for the y-coordinate.
      **/
-    override fun ctEquals(other: EdwardsPoint): Choise =
-        (x * other.z).ctEquals(other.x * z) and (y * other.z).ctEquals(other.y * z)
+    override fun ctEquals(other: EdwardsPoint): Choise {
+        val a1 = (x * other.z)
+        val a2 = other.x * z
+        val a =  (x * other.z).ctEquals(other.x * z)
+        val b = (y * other.z).ctEquals(other.y * z)
+        return a and b
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -178,6 +186,8 @@ data class EdwardsPoint(
     }
 
     operator fun times(scalar: Scalar): EdwardsPoint = mul(this, scalar)
+    operator fun plus(other: EdwardsPoint): EdwardsPoint =
+        (this + other.toProjectiveNiels()).toExtended()
 
     companion object {
         val IDENTITY = EdwardsPoint()

@@ -5,24 +5,26 @@ package com.github.andreypfau.curve25519.edwards
 import com.github.andreypfau.curve25519.*
 import com.github.andreypfau.curve25519.constants.EDWARDS_D
 import com.github.andreypfau.curve25519.field.FieldElement
-import com.github.andreypfau.curve25519.field.conditionalSelect
 import com.github.andreypfau.curve25519.field.sqrtRatio
+import com.github.andreypfau.kotlinio.crypto.ct.Choise
 
 data class CompressedEdwardsY constructor(
     val data: ByteArray = ByteArray(32),
 ) {
     fun decompress(): EdwardsPoint? {
         val y = FieldElement(data)
-        val z = FieldElement.one()
+        val z = FieldElement.ONE
         val yy = y.square()
         // u = y²-1
         val u = yy - z
         // v = dy²+1
         val v = (yy * EDWARDS_D) + z
-        val (xx, isValidCoordY) = FieldElement.sqrtRatio(u, v)
+        var (x, isValidCoordY) = FieldElement.sqrtRatio(u, v)
 
-        if (!isValidCoordY) return null
-        val x = conditionalSelect(-xx, xx, (data[31].toInt() shr 7) != 0)
+        if (!isValidCoordY.toBoolean()) return null
+
+        val compressedSignBit = Choise((data[31].toUByte().toInt() shr 7).toUByte())
+        x = x.conditionalNegate(compressedSignBit)
         val t = x * y
         return EdwardsPoint(x, y, z, t)
     }

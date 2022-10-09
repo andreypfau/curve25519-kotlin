@@ -9,6 +9,7 @@ import com.github.andreypfau.kotlinio.crypto.ct.*
 import com.github.andreypfau.kotlinio.crypto.ct.equals.*
 import com.github.andreypfau.kotlinio.crypto.ct.negate.*
 import com.github.andreypfau.kotlinio.crypto.ct.select.*
+import kotlin.experimental.and
 
 data class FieldElement(
     val data: ULongArray,
@@ -454,9 +455,10 @@ data class FieldElement(
         return output
     }
 
-    fun isNegative(): Boolean = (toByteArray()[0].toInt() and 1) != 0
-
-    fun absolute(): FieldElement = conditionalSelect(-this, this, isNegative())
+    fun isNegative(): Choise {
+        val bytes = toByteArray()
+        return Choise(bytes[0].toUByte() and 1u)
+    }
 
     override fun conditionalSelect(other: FieldElement, choise: Choise): FieldElement =
         FieldElement(
@@ -467,7 +469,9 @@ data class FieldElement(
             data[4].conditionalSelect(other.data[4], choise)
         )
 
-    override fun ctEquals(other: FieldElement): Choise = data ctEquals other.data
+    override fun ctEquals(other: FieldElement): Choise {
+        return data ctEquals other.data
+    }
 
     override fun identity() = IDENTITY
 
@@ -520,22 +524,25 @@ data class FieldElement(
                 2251799813685247u
             )
         )
+
+        fun fromBytes(buf: ByteArray, offset: Int = 0): FieldElement {
+            return FieldElement(
+                ulongArrayOf(
+                    load8(buf, offset + 0) and LOW_51_BIT_MASK,
+                    (load8(buf, offset + 6) shr 3) and LOW_51_BIT_MASK,
+                    (load8(buf, offset + 12) shr 6) and LOW_51_BIT_MASK,
+                    (load8(buf, offset + 19) shr 1) and LOW_51_BIT_MASK,
+                    (load8(buf, offset + 24) shr 12) and LOW_51_BIT_MASK,
+                )
+            )
+        }
     }
 }
 
-fun FieldElement(input: ByteArray): FieldElement {
-    return FieldElement(
-        ulongArrayOf(
-            load8(input, 0) and LOW_51_BIT_MASK,
-            (load8(input, 6) shr 3) and LOW_51_BIT_MASK,
-            (load8(input, 12) shr 6) and LOW_51_BIT_MASK,
-            (load8(input, 19) shr 1) and LOW_51_BIT_MASK,
-            (load8(input, 24) shr 12) and LOW_51_BIT_MASK,
-        )
-    )
-}
+fun FieldElement(buf: ByteArray, offset: Int = 0): FieldElement =
+    FieldElement.fromBytes(buf, offset)
 
-internal fun FieldElement.Companion.sqrtRatio(u: FieldElement, v: FieldElement): Pair<FieldElement, Boolean> {
+internal fun FieldElement.Companion.sqrtRatio(u: FieldElement, v: FieldElement): Pair<FieldElement, Choise> {
     // Using the same trick as in ed25519 decoding, we merge the
     // inversion, the square root, and the square test as follows.
     //
@@ -568,15 +575,20 @@ internal fun FieldElement.Companion.sqrtRatio(u: FieldElement, v: FieldElement):
     val check = v * r.square()
 
     val uNeg = -u
-    val correctSignSqrt = check.data.contentEquals(u.data)
-    val flippedSignSqrt = check.data.contentEquals(uNeg.data)
-    val flippedSignSqrtI = check.data.contentEquals((uNeg * SQRT_M1).data)
+    val correctSignSqrt = check.ctEquals(u)
+    val flippedSignSqrt = check.ctEquals(uNeg)
+    val flippedSignSqrtI = check.ctEquals(uNeg * SQRT_M1)
 
     val rPrime = r * SQRT_M1
-    r = conditionalSelect(rPrime, r, flippedSignSqrt || flippedSignSqrtI)
-    r = r.absolute()
+    r = r.conditionalSelect(rPrime, flippedSignSqrt or flippedSignSqrtI)
 
-    return r to (correctSignSqrt || flippedSignSqrt)
+    // Choose the nonnegative square root.
+    val rIsNegative = r.isNegative()
+    r = r.conditionalNegate(rIsNegative)
+
+    val wasNonZeroSquare = correctSignSqrt or flippedSignSqrt
+
+    return r to wasNonZeroSquare
 }
 
 private fun load8(byteArray: ByteArray, offset: Int): ULong {
@@ -618,20 +630,4 @@ private fun reduce(a: ULongArray): ULongArray {
     a[4] = (a[4] and LOW_51_BIT_MASK) + c3
 
     return a
-}
-
-internal fun conditionalSelect(a: FieldElement, b: FieldElement, condition: Boolean): FieldElement {
-    val m = if (condition) 0xFFFFFFFFFFFFFFFFu else 0uL
-
-    val ma0 = (m and a[0])
-    val mb0 = (m.inv() and b[0])
-
-    val v = ulongArrayOf(
-        ma0 or mb0,
-        (m and a[1]) or (m.inv() and b[1]),
-        (m and a[2]) or (m.inv() and b[2]),
-        (m and a[3]) or (m.inv() and b[3]),
-        (m and a[4]) or (m.inv() and b[4])
-    )
-    return FieldElement(v)
 }

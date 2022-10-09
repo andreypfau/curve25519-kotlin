@@ -1,5 +1,7 @@
 package com.github.andreypfau.curve25519
 
+import com.github.andreypfau.curve25519.edwards.CompressedEdwardsY
+import com.github.andreypfau.curve25519.edwards.EdwardsPoint
 import com.github.andreypfau.curve25519.field.FieldElement
 
 /**
@@ -29,5 +31,21 @@ data class ProjectivePoint(
             z = yyMinusXX,
             t = zz2 - yyMinusXX
         )
+    }
+
+    fun toExtended(): EdwardsPoint =
+        EdwardsPoint(
+            x = x * z,
+            y = y * z,
+            z = z.square(),
+            t = x * y
+        )
+
+    override fun toString(): String = buildString {
+        append("ProjectivePoint{").appendLine()
+        append("  X: ").append(x).appendLine()
+        append("  Y: ").append(y).appendLine()
+        append("  Z: ").append(z).appendLine()
+        append("}")
     }
 }

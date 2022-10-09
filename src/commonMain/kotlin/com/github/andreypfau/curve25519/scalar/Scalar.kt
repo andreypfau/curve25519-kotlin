@@ -21,6 +21,19 @@ value class Scalar(
         bytes[31] = bytes[31] and 0b0111_1111
     }
 
+    constructor(x: ULong) : this(
+        ByteArray(32).also {
+            it[0] = x.toByte()
+            it[1] = (x shr 8).toByte()
+            it[2] = (x shr 16).toByte()
+            it[3] = (x shr 24).toByte()
+            it[4] = (x shr 32).toByte()
+            it[5] = (x shr 40).toByte()
+            it[6] = (x shr 48).toByte()
+            it[7] = (x shr 56).toByte()
+        }
+    )
+
     operator fun times(table: EdwardsBasepointTable): EdwardsPoint = table * this
 
     /**
@@ -33,7 +46,7 @@ value class Scalar(
 
         // Step 1: change radix.
         // Convert from radix 256 (bytes) to radix 16 (nibbles)
-        for (i in 0   until  32) {
+        for (i in 0 until 32) {
             output[2 * i] = ((bytes[i].toInt() shr 0) and 15).toByte()
             output[2 * i + 1] = ((bytes[i].toInt() shr 4) and 15).toByte()
         }
@@ -41,7 +54,7 @@ value class Scalar(
         // Precondition note: since self[31] <= 127, output[63] <= 7
         // Step 2: recenter coefficients from [0,16) to [-8,8)
 
-        for (i in 0 until  63) {
+        for (i in 0 until 63) {
             val carry = (output[i] + 8) shr 4
             output[i] = (output[i] - (carry shl 4).toByte()).toByte()
             output[i + 1] = (output[i + 1] + carry).toByte()

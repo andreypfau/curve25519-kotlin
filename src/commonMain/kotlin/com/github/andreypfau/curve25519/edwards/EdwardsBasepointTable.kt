@@ -23,4 +23,10 @@ object EdwardsBasepointTable {
 
         return point
     }
+
+    /**
+     * Get the basepoint for this table as an [EdwardsPoint].
+     */
+    fun basepoint(): EdwardsPoint =
+        (EdwardsPoint.IDENTITY + EDWARD_BASEPOINT_TABLE[0][1]).toExtended()
 }
