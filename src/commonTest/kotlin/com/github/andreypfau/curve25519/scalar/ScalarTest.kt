@@ -1,6 +1,5 @@
 package com.github.andreypfau.curve25519.scalar
 
-import com.github.andreypfau.curve25519.scalar.Scalar
 import com.github.andreypfau.curve25519.utils.byteArrayOf
 import kotlin.test.Test
 
@@ -102,5 +101,6 @@ class ScalarTest {
         val c_bytes = byteArrayOf(
             134, 171, 119, 216, 180, 128, 178, 62, 171, 132, 32, 62, 34, 119, 104, 193, 47, 215, 181, 250, 14, 207, 172, 93, 75, 207, 211, 103, 144, 204, 56, 14
         )
+
     }
 }

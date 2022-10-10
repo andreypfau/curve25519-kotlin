@@ -101,86 +101,87 @@ data class FieldElement(
         val a3_19 = a3 * 19u
         val a4_19 = a4 * 19u
 
-        // r0 = a0×b0 + 19×(a1×b4 + a2×b3 + a3×b2 + a4×b1)
-        var r0 = mul64(a0, b0)
-        r0 = addMul64(r0, a1_19, b4)
-        r0 = addMul64(r0, a2_19, b3)
-        r0 = addMul64(r0, a3_19, b2)
-        r0 = addMul64(r0, a4_19, b1)
-
-        // r1 = a0×b1 + a1×b0 + 19×(a2×b4 + a3×b3 + a4×b2)
-        var r1 = mul64(a0, b1)
-        r1 = addMul64(r1, a1, b0)
-        r1 = addMul64(r1, a2_19, b4)
-        r1 = addMul64(r1, a3_19, b3)
-        r1 = addMul64(r1, a4_19, b2)
-
-        // r2 = a0×b2 + a1×b1 + a2×b0 + 19×(a3×b4 + a4×b3)
-        var r2 = mul64(a0, b2)
-        r2 = addMul64(r2, a1, b1)
-        r2 = addMul64(r2, a2, b0)
-        r2 = addMul64(r2, a3_19, b4)
-        r2 = addMul64(r2, a4_19, b3)
-
-        // r3 = a0×b3 + a1×b2 + a2×b1 + a3×b0 + 19×a4×b4
-        var r3 = mul64(a0, b3)
-        r3 = addMul64(r3, a1, b2)
-        r3 = addMul64(r3, a2, b1)
-        r3 = addMul64(r3, a3, b0)
-        r3 = addMul64(r3, a4_19, b4)
-
-        // r4 = a0×b4 + a1×b3 + a2×b2 + a3×b1 + a4×b0
-        var r4 = mul64(a0, b4)
-        r4 = addMul64(r4, a1, b3)
-        r4 = addMul64(r4, a2, b2)
-        r4 = addMul64(r4, a3, b1)
-        r4 = addMul64(r4, a4, b0)
-
-        // After the multiplication, we need to reduce (carry) the five coefficients
-        // to obtain a result with limbs that are at most slightly larger than 2⁵¹,
-        // to respect the Element invariant.
-        //
-        // Overall, the reduction works the same as carryPropagate, except with
-        // wider inputs: we take the carry for each coefficient by shifting it right
-        // by 51, and add it to the limb above it. The top carry is multiplied by 19
-        // according to the reduction identity and added to the lowest limb.
-        //
-        // The largest coefficient (r0) will be at most 111 bits, which guarantees
-        // that all carries are at most 111 - 51 = 60 bits, which fits in a uint64.
-        //
-        //     r0 = a0×b0 + 19×(a1×b4 + a2×b3 + a3×b2 + a4×b1)
-        //     r0 < 2⁵²×2⁵² + 19×(2⁵²×2⁵² + 2⁵²×2⁵² + 2⁵²×2⁵² + 2⁵²×2⁵²)
-        //     r0 < (1 + 19 × 4) × 2⁵² × 2⁵²
-        //     r0 < 2⁷ × 2⁵² × 2⁵²
-        //     r0 < 2¹¹¹
-        //
-        // Moreover, the top coefficient (r4) is at most 107 bits, so c4 is at most
-        // 56 bits, and c4 * 19 is at most 61 bits, which again fits in a uint64 and
-        // allows us to easily apply the reduction identity.
-        //
-        //     r4 = a0×b4 + a1×b3 + a2×b2 + a3×b1 + a4×b0
-        //     r4 < 5 × 2⁵² × 2⁵²
-        //     r4 < 2¹⁰⁷
-        //
-
-        val c0 = shiftRightBy51(r0)
-        val c1 = shiftRightBy51(r1)
-        val c2 = shiftRightBy51(r2)
-        val c3 = shiftRightBy51(r3)
-        val c4 = shiftRightBy51(r4)
-
-        val v = ulongArrayOf(
-            (r0.upper and LOW_51_BIT_MASK) + c4 * 19u,
-            (r1.upper and LOW_51_BIT_MASK) + c0,
-            (r2.upper and LOW_51_BIT_MASK) + c1,
-            (r3.upper and LOW_51_BIT_MASK) + c2,
-            (r4.upper and LOW_51_BIT_MASK) + c3,
-        )
-        // Now all coefficients fit into 64-bit registers but are still too large to
-        // be passed around as a Element. We therefore do one last carry chain,
-        // where the carries will be small enough to fit in the wiggle room above 2⁵¹.
-        reduce(v)
-        return FieldElement(v)
+        TODO()
+//        // r0 = a0×b0 + 19×(a1×b4 + a2×b3 + a3×b2 + a4×b1)
+//        var r0 = mul64(a0, b0)
+//        r0 = addMul64(r0, a1_19, b4)
+//        r0 = addMul64(r0, a2_19, b3)
+//        r0 = addMul64(r0, a3_19, b2)
+//        r0 = addMul64(r0, a4_19, b1)
+//
+//        // r1 = a0×b1 + a1×b0 + 19×(a2×b4 + a3×b3 + a4×b2)
+//        var r1 = mul64(a0, b1)
+//        r1 = addMul64(r1, a1, b0)
+//        r1 = addMul64(r1, a2_19, b4)
+//        r1 = addMul64(r1, a3_19, b3)
+//        r1 = addMul64(r1, a4_19, b2)
+//
+//        // r2 = a0×b2 + a1×b1 + a2×b0 + 19×(a3×b4 + a4×b3)
+//        var r2 = mul64(a0, b2)
+//        r2 = addMul64(r2, a1, b1)
+//        r2 = addMul64(r2, a2, b0)
+//        r2 = addMul64(r2, a3_19, b4)
+//        r2 = addMul64(r2, a4_19, b3)
+//
+//        // r3 = a0×b3 + a1×b2 + a2×b1 + a3×b0 + 19×a4×b4
+//        var r3 = mul64(a0, b3)
+//        r3 = addMul64(r3, a1, b2)
+//        r3 = addMul64(r3, a2, b1)
+//        r3 = addMul64(r3, a3, b0)
+//        r3 = addMul64(r3, a4_19, b4)
+//
+//        // r4 = a0×b4 + a1×b3 + a2×b2 + a3×b1 + a4×b0
+//        var r4 = mul64(a0, b4)
+//        r4 = addMul64(r4, a1, b3)
+//        r4 = addMul64(r4, a2, b2)
+//        r4 = addMul64(r4, a3, b1)
+//        r4 = addMul64(r4, a4, b0)
+//
+//        // After the multiplication, we need to reduce (carry) the five coefficients
+//        // to obtain a result with limbs that are at most slightly larger than 2⁵¹,
+//        // to respect the Element invariant.
+//        //
+//        // Overall, the reduction works the same as carryPropagate, except with
+//        // wider inputs: we take the carry for each coefficient by shifting it right
+//        // by 51, and add it to the limb above it. The top carry is multiplied by 19
+//        // according to the reduction identity and added to the lowest limb.
+//        //
+//        // The largest coefficient (r0) will be at most 111 bits, which guarantees
+//        // that all carries are at most 111 - 51 = 60 bits, which fits in a uint64.
+//        //
+//        //     r0 = a0×b0 + 19×(a1×b4 + a2×b3 + a3×b2 + a4×b1)
+//        //     r0 < 2⁵²×2⁵² + 19×(2⁵²×2⁵² + 2⁵²×2⁵² + 2⁵²×2⁵² + 2⁵²×2⁵²)
+//        //     r0 < (1 + 19 × 4) × 2⁵² × 2⁵²
+//        //     r0 < 2⁷ × 2⁵² × 2⁵²
+//        //     r0 < 2¹¹¹
+//        //
+//        // Moreover, the top coefficient (r4) is at most 107 bits, so c4 is at most
+//        // 56 bits, and c4 * 19 is at most 61 bits, which again fits in a uint64 and
+//        // allows us to easily apply the reduction identity.
+//        //
+//        //     r4 = a0×b4 + a1×b3 + a2×b2 + a3×b1 + a4×b0
+//        //     r4 < 5 × 2⁵² × 2⁵²
+//        //     r4 < 2¹⁰⁷
+//        //
+//
+//        val c0 = shiftRightBy51(r0)
+//        val c1 = shiftRightBy51(r1)
+//        val c2 = shiftRightBy51(r2)
+//        val c3 = shiftRightBy51(r3)
+//        val c4 = shiftRightBy51(r4)
+//
+//        val v = ulongArrayOf(
+//            (r0.upper and LOW_51_BIT_MASK) + c4 * 19u,
+//            (r1.upper and LOW_51_BIT_MASK) + c0,
+//            (r2.upper and LOW_51_BIT_MASK) + c1,
+//            (r3.upper and LOW_51_BIT_MASK) + c2,
+//            (r4.upper and LOW_51_BIT_MASK) + c3,
+//        )
+//        // Now all coefficients fit into 64-bit registers but are still too large to
+//        // be passed around as a Element. We therefore do one last carry chain,
+//        // where the carries will be small enough to fit in the wiggle room above 2⁵¹.
+//        reduce(v)
+//        return FieldElement(v)
     }
 
     /**
@@ -210,64 +211,65 @@ data class FieldElement(
      * only three Mul64 and four Add64, instead of five and eight.
      */
     fun square(): FieldElement {
-        val a = this
-
-        val l0 = a[0]
-        val l1 = a[1]
-        val l2 = a[2]
-        val l3 = a[3]
-        val l4 = a[4]
-
-        val l0_2 = l0 * 2u
-        val l1_2 = l1 * 2u
-
-        val l1_38 = l1 * 38u
-        val l2_38 = l2 * 38u
-        val l3_38 = l3 * 38u
-
-        val l3_19 = l3 * 19u
-        val l4_19 = l4 * 19u
-
-        // r0 = l0×l0 + 19×(l1×l4 + l2×l3 + l3×l2 + l4×l1) = l0×l0 + 19×2×(l1×l4 + l2×l3)
-        var r0 = mul64(l0, l0)
-        r0 = addMul64(r0, l1_38, l4)
-        r0 = addMul64(r0, l2_38, l3)
-
-        // r1 = l0×l1 + l1×l0 + 19×(l2×l4 + l3×l3 + l4×l2) = 2×l0×l1 + 19×2×l2×l4 + 19×l3×l3
-        var r1 = mul64(l0_2, l1)
-        r1 = addMul64(r1, l2_38, l4)
-        r1 = addMul64(r1, l3_19, l3)
-
-        // r2 = l0×l2 + l1×l1 + l2×l0 + 19×(l3×l4 + l4×l3) = 2×l0×l2 + l1×l1 + 19×2×l3×l4
-        var r2 = mul64(l0_2, l2)
-        r2 = addMul64(r2, l1, l1)
-        r2 = addMul64(r2, l3_38, l4)
-
-        // r3 = l0×l3 + l1×l2 + l2×l1 + l3×l0 + 19×l4×l4 = 2×l0×l3 + 2×l1×l2 + 19×l4×l4
-        var r3 = mul64(l0_2, l3)
-        r3 = addMul64(r3, l1_2, l2)
-        r3 = addMul64(r3, l4_19, l4)
-
-        // r4 = l0×l4 + l1×l3 + l2×l2 + l3×l1 + l4×l0 = 2×l0×l4 + 2×l1×l3 + l2×l2
-        var r4 = mul64(l0_2, l4)
-        r4 = addMul64(r4, l1_2, l3)
-        r4 = addMul64(r4, l2, l2)
-
-        val c0 = shiftRightBy51(r0)
-        val c1 = shiftRightBy51(r1)
-        val c2 = shiftRightBy51(r2)
-        val c3 = shiftRightBy51(r3)
-        val c4 = shiftRightBy51(r4)
-
-        val v = ULongArray(5)
-        v[0] = (r0.upper and LOW_51_BIT_MASK) + c4 * 19u
-        v[1] = (r1.upper and LOW_51_BIT_MASK) + c0
-        v[2] = (r2.upper and LOW_51_BIT_MASK) + c1
-        v[3] = (r3.upper and LOW_51_BIT_MASK) + c2
-        v[4] = (r4.upper and LOW_51_BIT_MASK) + c3
-        reduce(v)
-
-        return FieldElement(v)
+        TODO()
+//        val a = this
+//
+//        val l0 = a[0]
+//        val l1 = a[1]
+//        val l2 = a[2]
+//        val l3 = a[3]
+//        val l4 = a[4]
+//
+//        val l0_2 = l0 * 2u
+//        val l1_2 = l1 * 2u
+//
+//        val l1_38 = l1 * 38u
+//        val l2_38 = l2 * 38u
+//        val l3_38 = l3 * 38u
+//
+//        val l3_19 = l3 * 19u
+//        val l4_19 = l4 * 19u
+//
+//        // r0 = l0×l0 + 19×(l1×l4 + l2×l3 + l3×l2 + l4×l1) = l0×l0 + 19×2×(l1×l4 + l2×l3)
+//        var r0 = mul64(l0, l0)
+//        r0 = addMul64(r0, l1_38, l4)
+//        r0 = addMul64(r0, l2_38, l3)
+//
+//        // r1 = l0×l1 + l1×l0 + 19×(l2×l4 + l3×l3 + l4×l2) = 2×l0×l1 + 19×2×l2×l4 + 19×l3×l3
+//        var r1 = mul64(l0_2, l1)
+//        r1 = addMul64(r1, l2_38, l4)
+//        r1 = addMul64(r1, l3_19, l3)
+//
+//        // r2 = l0×l2 + l1×l1 + l2×l0 + 19×(l3×l4 + l4×l3) = 2×l0×l2 + l1×l1 + 19×2×l3×l4
+//        var r2 = mul64(l0_2, l2)
+//        r2 = addMul64(r2, l1, l1)
+//        r2 = addMul64(r2, l3_38, l4)
+//
+//        // r3 = l0×l3 + l1×l2 + l2×l1 + l3×l0 + 19×l4×l4 = 2×l0×l3 + 2×l1×l2 + 19×l4×l4
+//        var r3 = mul64(l0_2, l3)
+//        r3 = addMul64(r3, l1_2, l2)
+//        r3 = addMul64(r3, l4_19, l4)
+//
+//        // r4 = l0×l4 + l1×l3 + l2×l2 + l3×l1 + l4×l0 = 2×l0×l4 + 2×l1×l3 + l2×l2
+//        var r4 = mul64(l0_2, l4)
+//        r4 = addMul64(r4, l1_2, l3)
+//        r4 = addMul64(r4, l2, l2)
+//
+//        val c0 = shiftRightBy51(r0)
+//        val c1 = shiftRightBy51(r1)
+//        val c2 = shiftRightBy51(r2)
+//        val c3 = shiftRightBy51(r3)
+//        val c4 = shiftRightBy51(r4)
+//
+//        val v = ULongArray(5)
+//        v[0] = (r0.upper and LOW_51_BIT_MASK) + c4 * 19u
+//        v[1] = (r1.upper and LOW_51_BIT_MASK) + c0
+//        v[2] = (r2.upper and LOW_51_BIT_MASK) + c1
+//        v[3] = (r3.upper and LOW_51_BIT_MASK) + c2
+//        v[4] = (r4.upper and LOW_51_BIT_MASK) + c3
+//        reduce(v)
+//
+//        return FieldElement(v)
     }
 
     fun square2(): FieldElement {

@@ -7,6 +7,7 @@ import com.github.andreypfau.curve25519.edwards.EdwardsPoint
 import com.github.andreypfau.curve25519.field.FieldElement
 import com.github.andreypfau.curve25519.models.AffineNielsPoint
 import com.github.andreypfau.curve25519.scalar.Scalar
+import com.github.andreypfau.curve25519.scalar.Scalar52
 
 internal val LOW_51_BIT_MASK = (1uL shl 51) - 1u
 
@@ -18,6 +19,25 @@ internal val ED25519_BASEPOINT_COMPRESSED = CompressedEdwardsY(
         0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66
     )
 )
+
+internal val L = Scalar52(
+    0x0002631a5cf5d3edu,
+    0x000dea2f79cd6581u,
+    0x000000000014def9u,
+    0x0000000000000000u,
+    0x0000100000000000u,
+)
+
+internal val RR = Scalar52(
+    0x0009d265e952d13buL,
+    0x000d63c715bea69fuL,
+    0x0005be65cb687604uL,
+    0x0003dceec73d217fuL,
+    0x000009411b7c309auL,
+)
+
+/// `L` * `LFACTOR` = -1 (mod 2^52)
+internal val LFACTOR = 0x51da312547e1buL
 
 /**
  * Edwards `d` value, equal to `-121665/121666 mod p`.

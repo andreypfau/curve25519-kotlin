@@ -67,7 +67,7 @@ value class Scalar(
         return output
     }
 
-    fun unpack(): UnpackedScalar = UnpackedScalar.fromBytes(bytes)
+    fun unpack(): UnpackedScalar = UnpackedScalar.fromByteArray(bytes)
 
     fun reduce(): Scalar = TODO()
 
