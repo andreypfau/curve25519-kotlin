@@ -3,12 +3,9 @@
 package com.github.andreypfau.curve25519.field
 
 import com.github.andreypfau.curve25519.constants.SQRT_M1
-import com.github.andreypfau.curve25519.internal.feMulCommon
-import com.github.andreypfau.curve25519.internal.fePow2k
-import com.github.andreypfau.curve25519.internal.getULongLE
-import com.github.andreypfau.curve25519.subtle.constantTimeEquals
-import com.github.andreypfau.curve25519.subtle.constantTimeSelect
-import com.github.andreypfau.curve25519.subtle.constantTimeSwap
+import com.github.andreypfau.curve25519.edwards.CompressedEdwardsY
+import com.github.andreypfau.curve25519.internal.*
+import kotlin.jvm.JvmStatic
 
 private val LOW_51_BIT_MASK = (1uL shl 51) - 1uL
 private const val P_TIMES_SIXTEEN_0 = 36028797018963664uL
@@ -100,20 +97,32 @@ data class FieldElement(
         inner[4] = choise.constantTimeSelect(other.inner[4].toLong(), inner[4].toLong()).toULong()
     }
 
-    fun set(t: FieldElement): FieldElement = apply {
+    fun set(t: FieldElement) {
         t.inner.copyInto(this.inner)
     }
 
-    fun zero(): FieldElement = apply {
+    fun set(compressedEdwardsY: CompressedEdwardsY) {
+        set(compressedEdwardsY.data)
+    }
+
+    fun set(input: ByteArray, offset: Int = 0) {
+        inner[0] = input.getULongLE(offset) and LOW_51_BIT_MASK
+        inner[1] = (input.getULongLE(offset + 6) shr 3) and LOW_51_BIT_MASK
+        inner[1] = (input.getULongLE(offset + 12) shr 6) and LOW_51_BIT_MASK
+        inner[1] = (input.getULongLE(offset + 19) shr 1) and LOW_51_BIT_MASK
+        inner[1] = (input.getULongLE(offset + 24) shr 12) and LOW_51_BIT_MASK
+    }
+
+    fun zero() {
         inner.fill(0u)
     }
 
-    fun one(): FieldElement = apply {
+    fun one() {
         inner[0] = 1u
         inner.fill(0u, 1)
     }
 
-    fun minusOne(): FieldElement = apply {
+    fun minusOne() {
         inner[0] = 2251799813685228u
         inner.fill(2251799813685247u, 1)
     }
@@ -360,7 +369,10 @@ data class FieldElement(
         return this to (correctSignSqrt or flippedSignSqrt)
     }
 
-    fun invSqrt() = sqrtRationI(one(), this)
+    fun invSqrt() {
+        one()
+        sqrtRationI(this, this)
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -376,8 +388,19 @@ data class FieldElement(
         const val SIZE_BYTES = 32
         const val WIDE_SIZE_BYTES = 64
 
-        fun one() = FieldElement().one()
-        fun zero() = FieldElement().zero()
-        fun minusOne() = FieldElement().minusOne()
+        @JvmStatic
+        fun one() = FieldElement().apply {
+            one()
+        }
+
+        @JvmStatic
+        fun zero() = FieldElement().apply {
+            zero()
+        }
+
+        @JvmStatic
+        fun minusOne() = FieldElement().apply {
+            minusOne()
+        }
     }
 }

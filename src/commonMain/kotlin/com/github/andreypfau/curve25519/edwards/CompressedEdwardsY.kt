@@ -3,9 +3,15 @@ package com.github.andreypfau.curve25519.edwards
 import com.github.andreypfau.curve25519.field.FieldElement
 import kotlin.experimental.xor
 
-class CompressedEdwardsY(
-    val data: ByteArray = ByteArray(SIZE_BYTES)
+class CompressedEdwardsY private constructor(
+    val data: ByteArray
 ) {
+    constructor() : this(ByteArray(SIZE_BYTES))
+
+    fun set(byteArray: ByteArray, offset: Int = 0) {
+        byteArray.copyInto(data, 0, offset, offset + SIZE_BYTES)
+    }
+
     fun set(point: EdwardsPoint): CompressedEdwardsY = apply {
         val x = FieldElement()
         val y = FieldElement()

@@ -16,7 +16,7 @@ fun ByteArray.getULongLE(index: Int = 0): ULong = getLongLE(index).toULong()
 private const val HEX_CHARS = "0123456789abcdef"
 
 internal fun hex(hexString: String): ByteArray {
-    require(hexString.length % 2 == 0)
+    require(hexString.length % 2 == 0) { hexString }
     return ByteArray(hexString.length / 2).apply {
         var i = 0
         while (i < hexString.length) {

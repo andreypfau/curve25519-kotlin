@@ -1,5 +1,7 @@
 package com.github.andreypfau.curve25519.subtle
 
+import com.github.andreypfau.curve25519.internal.constantTimeEquals
+import com.github.andreypfau.curve25519.internal.constantTimeSelect
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

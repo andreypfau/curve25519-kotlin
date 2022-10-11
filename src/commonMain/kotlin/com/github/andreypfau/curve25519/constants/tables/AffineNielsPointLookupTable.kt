@@ -1,7 +1,7 @@
 package com.github.andreypfau.curve25519.constants.tables
 
+import com.github.andreypfau.curve25519.internal.constantTimeEquals
 import com.github.andreypfau.curve25519.models.AffineNielsPoint
-import com.github.andreypfau.curve25519.subtle.constantTimeEquals
 
 class AffineNielsPointLookupTable(
     val data: Array<AffineNielsPoint> = Array(8) { AffineNielsPoint() }
