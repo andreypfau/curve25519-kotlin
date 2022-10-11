@@ -1,73 +1,56 @@
 package com.github.andreypfau.curve25519.models
 
-import com.github.andreypfau.curve25519.Identity
+import com.github.andreypfau.curve25519.constants.EDWARDS_D2
 import com.github.andreypfau.curve25519.edwards.EdwardsPoint
 import com.github.andreypfau.curve25519.field.FieldElement
-import com.github.andreypfau.curve25519.window.LookupTable
-import com.github.andreypfau.kotlinio.crypto.ct.Choise
-import com.github.andreypfau.kotlinio.crypto.ct.negate.ConditionallyNegatable
-import com.github.andreypfau.kotlinio.crypto.ct.select.ConditionallySelectable
 
 data class ProjectiveNielsPoint(
     val yPlusX: FieldElement,
     val yMinusX: FieldElement,
     val z: FieldElement,
     val t2d: FieldElement
-) : Identity<ProjectiveNielsPoint>, ConditionallySelectable<ProjectiveNielsPoint>,
-    ConditionallyNegatable<ProjectiveNielsPoint> {
-    constructor() : this(FieldElement.ONE, FieldElement.ONE, FieldElement.ONE, FieldElement.ZERO)
+) {
+    constructor() : this(FieldElement(), FieldElement(), FieldElement(), FieldElement())
 
-    override fun ctEquals(other: ProjectiveNielsPoint): Choise =
-        yPlusX.ctEquals(other.yPlusX) and
-                yMinusX.ctEquals(other.yMinusX) and
-                z.ctEquals(other.z) and
-                t2d.ctEquals(other.t2d)
-
-    override fun identity(): ProjectiveNielsPoint = IDENTITY
-
-    override fun conditionalSelect(other: ProjectiveNielsPoint, choise: Choise): ProjectiveNielsPoint =
-        ProjectiveNielsPoint(
-            yPlusX.conditionalSelect(other.yPlusX, choise),
-            yMinusX.conditionalSelect(other.yMinusX, choise),
-            z.conditionalSelect(other.z, choise),
-            t2d.conditionalSelect(other.t2d, choise)
-        )
-
-    override fun conditionalNegate(choise: Choise): ProjectiveNielsPoint =
-        conditionalSelect(unaryMinus(), choise)
-
-    override fun unaryMinus(): ProjectiveNielsPoint =
-        ProjectiveNielsPoint(
-            yPlusX = yMinusX,
-            yMinusX = yPlusX,
-            z = z,
-            t2d = -t2d
-        )
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is ProjectiveNielsPoint) return false
-        return ctEquals(other) == Choise.TRUE
+    fun identity(): ProjectiveNielsPoint = apply {
+        yPlusX.one()
+        yMinusX.one()
+        z.one()
+        t2d.zero()
     }
 
-    override fun hashCode(): Int {
-        var result = yPlusX.hashCode()
-        result = 31 * result + yMinusX.hashCode()
-        result = 31 * result + z.hashCode()
-        result = 31 * result + t2d.hashCode()
-        return result
+    fun setEdwards(ep: EdwardsPoint): ProjectiveNielsPoint = apply {
+        yPlusX.add(ep.y, ep.x)
+        yMinusX.sub(ep.y, ep.x)
+        z.set(ep.z)
+        t2d.mul(ep.t, EDWARDS_D2)
     }
 
-    companion object {
-        val IDENTITY = ProjectiveNielsPoint()
+    fun conditionalSelect(
+        a: ProjectiveNielsPoint,
+        b: ProjectiveNielsPoint,
+        choise: Int
+    ) {
+        yPlusX.conditionalSelect(a.yPlusX, b.yPlusX, choise)
+        yMinusX.conditionalSelect(a.yMinusX, b.yMinusX, choise)
+        z.conditionalSelect(a.z, b.z, choise)
+        t2d.conditionalSelect(a.t2d, b.t2d, choise)
+    }
 
-        fun lookupTable(point: EdwardsPoint): LookupTable<ProjectiveNielsPoint> {
-            val projectiveNielsPoint = point.toProjectiveNiels()
-            val points = Array(8) { projectiveNielsPoint }
-            for (j in 0 until 7) {
-                points[j + 1] = (point + points[j]).toExtended().toProjectiveNiels()
-            }
-            return LookupTable(points, IDENTITY)
-        }
+    fun conditionalAssign(
+        other: ProjectiveNielsPoint,
+        choise: Int
+    ) {
+        yPlusX.conditionalAssign(other.yPlusX, choise)
+        yMinusX.conditionalAssign(other.yMinusX, choise)
+        z.conditionalAssign(other.z, choise)
+        t2d.conditionalAssign(other.t2d, choise)
+    }
+
+    fun conditionalNegate(
+        choise: Int
+    ) {
+        yPlusX.conditionalSwap(yMinusX, choise)
+        t2d.conditionalNegate(choise)
     }
 }

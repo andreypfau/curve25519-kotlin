@@ -3,48 +3,28 @@ package com.github.andreypfau.curve25519.models
 import com.github.andreypfau.curve25519.edwards.EdwardsPoint
 import com.github.andreypfau.curve25519.field.FieldElement
 
-/**
- * A ProjectivePoint is a point \((X:Y:Z)\) on the \(\mathbb P^2\) model of the curve.
- * A point \((x,y)\) in the affine model corresponds to \((x:y:1)\).
- */
 data class ProjectivePoint(
     val x: FieldElement,
     val y: FieldElement,
     val z: FieldElement
 ) {
-    /**
-     * Double this point:
-     * @return `this + this`
-     */
-    fun double(): CompletedPoint {
-        val xx = x.square()
-        val yy = y.square()
-        val zz2 = z.square2()
-        val xPlusY = x + y
-        val xPlusYsq = xPlusY.square()
-        val yyPlusXX = yy + xx
-        val yyMinusXX = yy - xx
-        return CompletedPoint(
-            x = xPlusYsq - yyPlusXX,
-            y = yyPlusXX,
-            z = yyMinusXX,
-            t = zz2 - yyMinusXX
-        )
+    constructor() : this(FieldElement(), FieldElement(), FieldElement())
+
+    fun identity(): ProjectivePoint = apply {
+        x.zero()
+        y.one()
+        z.one()
     }
 
-    fun toExtended(): EdwardsPoint =
-        EdwardsPoint(
-            x = x * z,
-            y = y * z,
-            z = z.square(),
-            t = x * y
-        )
+    fun set(cp: CompletedPoint): ProjectivePoint = apply {
+        x.mul(cp.x, cp.t)
+        y.mul(cp.y, cp.z)
+        z.mul(cp.z, cp.t)
+    }
 
-    override fun toString(): String = buildString {
-        append("ProjectivePoint{").appendLine()
-        append("  X: ").append(x).appendLine()
-        append("  Y: ").append(y).appendLine()
-        append("  Z: ").append(z).appendLine()
-        append("}")
+    fun set(ep: EdwardsPoint): ProjectivePoint = apply {
+        x.set(ep.x)
+        y.set(ep.y)
+        z.set(ep.z)
     }
 }
