@@ -39,12 +39,8 @@ class Ed25519PrivateKey internal constructor(
         val r = Scalar.fromWideByteArray(hashR)
 
         // R = rB
-        val R = EdwardsPoint().apply {
-            mulBasepoint(ED25519_BASEPOINT_TABLE, r)
-        }
-        val rCompressed = CompressedEdwardsY().apply {
-            set(R)
-        }
+        val R = EdwardsPoint().mulBasepoint(ED25519_BASEPOINT_TABLE, r)
+        val rCompressed = CompressedEdwardsY.from(R)
 
         // S = H(R,A,m)
         val s = Scalar()

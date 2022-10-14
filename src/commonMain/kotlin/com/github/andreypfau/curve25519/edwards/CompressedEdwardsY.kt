@@ -3,6 +3,7 @@ package com.github.andreypfau.curve25519.edwards
 import com.github.andreypfau.curve25519.constants.NON_CANONICAL_SIGN_BITS
 import com.github.andreypfau.curve25519.field.FieldElement
 import kotlin.experimental.xor
+import kotlin.jvm.JvmStatic
 
 class CompressedEdwardsY constructor(
     val data: ByteArray
@@ -13,17 +14,7 @@ class CompressedEdwardsY constructor(
         byteArray.copyInto(data, 0, offset, offset + SIZE_BYTES)
     }
 
-    fun set(point: EdwardsPoint): CompressedEdwardsY = apply {
-        val x = FieldElement()
-        val y = FieldElement()
-        val recip = FieldElement()
-        recip.invert(point.z)
-        x.mul(point.x, recip)
-        y.mul(point.y, recip)
-
-        y.toBytes(data)
-        data[31] = data[31] xor (x.isNegative() shl 7).toByte()
-    }
+    fun set(point: EdwardsPoint): CompressedEdwardsY = from(point, this)
 
     fun isCannonicalVartime(): Boolean {
         if (!yCanonnical()) return false
@@ -43,5 +34,19 @@ class CompressedEdwardsY constructor(
 
     companion object {
         const val SIZE_BYTES = 32
+
+        @JvmStatic
+        fun from(ep: EdwardsPoint, output: CompressedEdwardsY = CompressedEdwardsY()): CompressedEdwardsY {
+            val x = FieldElement()
+            val y = FieldElement()
+            val recip = FieldElement()
+            recip.invert(ep.z)
+            x.mul(ep.x, recip)
+            y.mul(ep.y, recip)
+
+            y.toBytes(output.data)
+            output.data[31] = output.data[31] xor (x.isNegative() shl 7).toByte()
+            return output
+        }
     }
 }

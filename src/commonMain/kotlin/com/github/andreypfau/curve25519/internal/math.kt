@@ -4,7 +4,7 @@ package com.github.andreypfau.curve25519.internal
 
 private val MASK32 = (1uL shl 32) - 1uL
 
-internal inline fun mul64(x: ULong, y: ULong, output: ULongArray = ULongArray(2)): ULongArray = output.apply {
+internal fun mul64(x: ULong, y: ULong, output: ULongArray = ULongArray(2)): ULongArray {
     val x0 = x and MASK32
     val x1 = x shr 32
     val y0 = y and MASK32
@@ -16,6 +16,7 @@ internal inline fun mul64(x: ULong, y: ULong, output: ULongArray = ULongArray(2)
     w1 += x0 * y1
     output[0] = x1 * y1 + w2 + (w1 shr 32)
     output[1] = x * y
+    return output
 }
 
 internal inline fun add64(x: ULong, y: ULong, carry: ULong, output: ULongArray = ULongArray(2)): ULongArray {
@@ -24,10 +25,10 @@ internal inline fun add64(x: ULong, y: ULong, carry: ULong, output: ULongArray =
     return output
 }
 
-internal inline fun add128(x: ULongArray, y: ULongArray, output: ULongArray = ULongArray(2)): ULongArray =
-    output.apply {
-        val (hi, carry) = add64(x[1], y[1], 0u, output)
-        val (lo, _) = add64(x[0], y[0], carry, output)
-        output[0] = lo
-        output[1] = hi
-    }
+internal inline fun add128(x: ULongArray, y: ULongArray, output: ULongArray = ULongArray(2)): ULongArray {
+    val (hi, carry) = add64(x[1], y[1], 0u, output)
+    val (lo, _) = add64(x[0], y[0], carry, output)
+    output[0] = lo
+    output[1] = hi
+    return output
+}

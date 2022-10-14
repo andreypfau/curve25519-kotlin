@@ -44,17 +44,13 @@ data class EdwardsPoint(
         set(r.double(s))
     }
 
-    fun mul(basepoint: EdwardsBasepointTable, scalar: Scalar): EdwardsPoint = apply {
-        basepoint.mul(this, scalar)
-    }
+    fun mul(basepoint: EdwardsBasepointTable, scalar: Scalar): EdwardsPoint = mul(basepoint, scalar, this)
 
     fun mul(point: EdwardsPoint, scalar: Scalar) {
         edwardsMulCommon(point, scalar, this)
     }
 
-    fun mulBasepoint(basepoint: EdwardsBasepointTable, scalar: Scalar) {
-        basepoint.mul(this, scalar)
-    }
+    fun mulBasepoint(basepoint: EdwardsBasepointTable, scalar: Scalar) = basepoint.mul(this, scalar)
 
     fun negate(t: EdwardsPoint) = apply {
         negate(t, this)
@@ -115,11 +111,12 @@ data class EdwardsPoint(
         }
 
         @JvmStatic
-        fun from(cp: CompletedPoint, output: EdwardsPoint = EdwardsPoint()) = output.apply {
+        fun from(cp: CompletedPoint, output: EdwardsPoint = EdwardsPoint()): EdwardsPoint {
             output.x.mul(cp.x, cp.t)
             output.y.mul(cp.y, cp.z)
             output.z.mul(cp.z, cp.t)
             output.t.mul(cp.x, cp.y)
+            return output
         }
 
         @JvmStatic
@@ -148,6 +145,11 @@ data class EdwardsPoint(
         @JvmStatic
         fun mul(point: EdwardsPoint, scalar: Scalar, output: EdwardsPoint = EdwardsPoint()) = output.apply {
             edwardsMulCommon(point, scalar, output)
+        }
+
+        @JvmStatic
+        fun mul(basepoint: EdwardsBasepointTable, scalar: Scalar, output: EdwardsPoint = EdwardsPoint()): EdwardsPoint {
+            return basepoint.mul(output, scalar)
         }
 
         @JvmStatic

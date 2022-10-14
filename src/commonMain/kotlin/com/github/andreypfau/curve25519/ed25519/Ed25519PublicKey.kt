@@ -37,9 +37,7 @@ class Ed25519PublicKey internal constructor(
         //
         // Note: IsSmallOrder includes a cofactor multiply.
         val r = varTimeDoubleScalarBaseMul(k, a, s)
-        val rCompressed = CompressedEdwardsY().apply {
-            set(r)
-        }
+        val rCompressed = CompressedEdwardsY.from(r)
 
         return rCompressed.data.contentEquals(signature.copyOf(32))
     }

@@ -15,23 +15,25 @@ private inline fun mul64(a: ULong, b: ULong): ULongArray {
     return uInt128
 }
 
-private inline fun mulAdd64(uInt128: ULongArray, a: ULong, b: ULong) = uInt128.apply {
-    val hi_0 = this.hi
-    val lo_0 = this.lo
-    val (hi_1, lo_1) = mul64(a, b, this)
-    val (lo_2, c) = add64(lo_0, lo_1, 0u, this)
-    val (hi_2, _) = add64(hi_0, hi_1, c, this)
-    this[0] = lo_2
-    this[1] = hi_2
+private inline fun mulAdd64(uInt128: ULongArray, a: ULong, b: ULong): ULongArray {
+    val hi_0 = uInt128.hi
+    val lo_0 = uInt128.lo
+    val (hi_1, lo_1) = mul64(a, b, uInt128)
+    val (lo_2, c) = add64(lo_0, lo_1, 0u, uInt128)
+    val (hi_2, _) = add64(hi_0, hi_1, c, uInt128)
+    uInt128[0] = lo_2
+    uInt128[1] = hi_2
+    return uInt128
 }
 
-private inline fun shift51(a: ULongArray, b: ULongArray): ULongArray = b.apply {
+private inline fun shift51(a: ULongArray, b: ULongArray): ULongArray {
     val tmp = shiftRightBy51(a)
     val buf = ULongArray(2)
     val (lo, carry) = add64(b.lo, tmp, 0u, buf)
     val (hi, _) = add64(b.hi, 0u, carry, buf)
     b[0] = lo
     b[1] = hi
+    return b
 }
 
 private inline fun shiftRightBy51(uInt128: ULongArray): ULong {

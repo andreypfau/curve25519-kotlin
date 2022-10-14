@@ -54,9 +54,7 @@ object Ed25519 {
         val a = Scalar()
         a.setByteArray(digest)
 
-        val A = EdwardsPoint()
-        val aCompressed = CompressedEdwardsY()
-        aCompressed.set(A.mul(ED25519_BASEPOINT_TABLE, a))
+        val aCompressed = CompressedEdwardsY.from(EdwardsPoint.mul(ED25519_BASEPOINT_TABLE, a))
         seed.copyInto(output, offset)
         aCompressed.data.copyInto(output, offset + 32)
         return output
