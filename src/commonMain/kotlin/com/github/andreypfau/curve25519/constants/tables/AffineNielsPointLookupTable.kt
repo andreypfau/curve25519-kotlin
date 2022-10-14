@@ -2,26 +2,26 @@ package com.github.andreypfau.curve25519.constants.tables
 
 import com.github.andreypfau.curve25519.internal.constantTimeEquals
 import com.github.andreypfau.curve25519.models.AffineNielsPoint
+import kotlin.jvm.JvmStatic
 
 class AffineNielsPointLookupTable(
-    val data: Array<AffineNielsPoint> = Array(8) { AffineNielsPoint() }
+    val points: Array<AffineNielsPoint> = Array(64) { AffineNielsPoint() }
 ) {
-    operator fun get(index: Int) = data[index]
+    operator fun get(index: Int) = points[index]
 
-    fun lookup(x: Byte): AffineNielsPoint {
+    fun lookup(x: Byte, output: AffineNielsPoint = AffineNielsPoint()): AffineNielsPoint {
         // Compute xabs = |x|
         val xmask = x.toInt() ushr 7
         val xabs = ((x + xmask) xor xmask).toByte()
 
         // t == |x| * P
-        val t = AffineNielsPoint()
-        lookupAffineNiels(t, xabs)
+        lookupAffineNiels(output, xabs)
 
         // t == x * P.
         val negMask = (xmask and 1).toByte().toInt()
-        t.conditionalNegate(negMask)
+        output.conditionalNegate(negMask)
 
-        return t
+        return output
     }
 
     fun lookupAffineNiels(out: AffineNielsPoint, xabs: Byte): AffineNielsPoint {
@@ -32,5 +32,16 @@ class AffineNielsPointLookupTable(
             out.conditionalAssign(get(j - 1), c)
         }
         return out
+    }
+
+    companion object {
+        @JvmStatic
+        fun unpack(packed: Array<ByteArray>): AffineNielsPointLookupTable {
+            val table = AffineNielsPointLookupTable()
+            packed.forEachIndexed { index, bytes ->
+                table.points[index].setRawData(bytes)
+            }
+            return table
+        }
     }
 }

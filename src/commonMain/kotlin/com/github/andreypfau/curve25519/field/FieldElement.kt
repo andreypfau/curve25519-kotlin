@@ -18,37 +18,13 @@ data class FieldElement(
             this(ulongArrayOf(l0, l1, l2, l3, l4))
 
     // Add sets `fe = a + b`, and returns fe.
-    fun add(a: FieldElement, b: FieldElement): FieldElement = apply {
-        inner[0] = a.inner[0] + b.inner[0]
-        inner[1] = a.inner[1] + b.inner[1]
-        inner[2] = a.inner[2] + b.inner[2]
-        inner[3] = a.inner[3] + b.inner[3]
-        inner[4] = a.inner[4] + b.inner[4]
-    }
+    fun add(a: FieldElement, b: FieldElement): FieldElement = add(a, b, this)
 
     // Sub sets `fe = a - b`, and returns fe.
-    fun sub(a: FieldElement, b: FieldElement): FieldElement {
-        // To avoid underflow, first add a multiple of p.
-        // Choose 16*p = p shl 4 to be larger than 54-bit b.
-        //
-        // If we could statically track the bitlengths of the limbs
-        // of every FieldElement, we could choose a multiple of p
-        // just bigger than b and avoid having to do a reduction.
-        return reduce(
-            ulongArrayOf(
-                (a.inner[0] + P_TIMES_SIXTEEN_0) - b.inner[0],
-                (a.inner[1] + P_TIMES_SIXTEEN_1234) - b.inner[1],
-                (a.inner[2] + P_TIMES_SIXTEEN_1234) - b.inner[2],
-                (a.inner[3] + P_TIMES_SIXTEEN_1234) - b.inner[3],
-                (a.inner[4] + P_TIMES_SIXTEEN_1234) - b.inner[4],
-            )
-        )
-    }
+    fun sub(a: FieldElement, b: FieldElement): FieldElement = sub(a, b, this)
 
     // [mul] sets `fe =a * b`, and returns fe.
-    fun mul(a: FieldElement, b: FieldElement): FieldElement = apply {
-        feMulCommon(this.inner, a.inner, b.inner)
-    }
+    fun mul(a: FieldElement, b: FieldElement): FieldElement = mul(a, b, this)
 
     // Neg sets `fe = -t`, and returns fe.
     fun negate(t: FieldElement): FieldElement = apply {
@@ -97,15 +73,15 @@ data class FieldElement(
         inner[4] = choise.constantTimeSelect(other.inner[4].toLong(), inner[4].toLong()).toULong()
     }
 
-    fun set(t: FieldElement) {
+    fun set(t: FieldElement, output: FieldElement = this) = output.apply {
         t.inner.copyInto(this.inner)
     }
 
-    fun set(compressedEdwardsY: CompressedEdwardsY) {
+    fun set(compressedEdwardsY: CompressedEdwardsY, output: FieldElement = this) = output.apply {
         set(compressedEdwardsY.data)
     }
 
-    fun set(input: ByteArray, offset: Int = 0) {
+    fun set(input: ByteArray, offset: Int = 0, output: FieldElement = this) = output.apply {
         inner[0] = input.getULongLE(offset) and LOW_51_BIT_MASK
         inner[1] = (input.getULongLE(offset + 6) shr 3) and LOW_51_BIT_MASK
         inner[1] = (input.getULongLE(offset + 12) shr 6) and LOW_51_BIT_MASK
@@ -113,16 +89,16 @@ data class FieldElement(
         inner[1] = (input.getULongLE(offset + 24) shr 12) and LOW_51_BIT_MASK
     }
 
-    fun zero() {
+    fun zero(output: FieldElement = this) = output.apply {
         inner.fill(0u)
     }
 
-    fun one() {
+    fun one(output: FieldElement = this) = output.apply {
         inner[0] = 1u
         inner.fill(0u, 1)
     }
 
-    fun minusOne() {
+    fun minusOne(output: FieldElement = this) = output.apply {
         inner[0] = 2251799813685228u
         inner.fill(2251799813685247u, 1)
     }
@@ -150,35 +126,9 @@ data class FieldElement(
         conditionalAssign(feNeg.negate(this), choise)
     }
 
-    fun reduce(limbs: ULongArray): FieldElement = apply {
-        var (l0, l1, l2, l3, l4) = limbs
+    fun reduce(limbs: ULongArray): FieldElement = reduce(limbs, this)
 
-        val c0 = l0 shr 51
-        val c1 = l1 shr 51
-        val c2 = l2 shr 51
-        val c3 = l3 shr 51
-        val c4 = l4 shr 51
-
-        l0 = l0 and LOW_51_BIT_MASK
-        l1 = l1 and LOW_51_BIT_MASK
-        l2 = l2 and LOW_51_BIT_MASK
-        l3 = l3 and LOW_51_BIT_MASK
-        l4 = l4 and LOW_51_BIT_MASK
-
-        inner[0] = l0 + c4 * 19u
-        inner[1] = l1 + c0
-        inner[2] = l2 + c1
-        inner[3] = l3 + c2
-        inner[4] = l4 + c3
-    }
-
-    fun setBytes(input: ByteArray, offset: Int = 0): FieldElement = apply {
-        inner[0] = (input.getULongLE(offset)) and LOW_51_BIT_MASK
-        inner[1] = (input.getULongLE(offset + 6) shr 3) and LOW_51_BIT_MASK
-        inner[2] = (input.getULongLE(offset + 12) shr 6) and LOW_51_BIT_MASK
-        inner[3] = (input.getULongLE(offset + 19) shr 1) and LOW_51_BIT_MASK
-        inner[4] = (input.getULongLE(offset + 24) shr 12) and LOW_51_BIT_MASK
-    }
+    fun setBytes(input: ByteArray, offset: Int = 0): FieldElement = fromBytes(input, offset, this)
 
     fun setBytesWide(input: ByteArray, offset: Int = 0): FieldElement = apply {
         val lo = FieldElement()
@@ -260,17 +210,9 @@ data class FieldElement(
         return output
     }
 
-    fun square(x: FieldElement): FieldElement = apply {
-        fePow2k(inner, x.inner, 1)
-        return this
-    }
+    fun square(x: FieldElement): FieldElement = square(x, this)
 
-    fun square2(t: FieldElement): FieldElement = apply {
-        fePow2k(inner, t.inner, 1)
-        for (i in 0 until 5) {
-            inner[i] *= 2uL
-        }
-    }
+    fun square2(t: FieldElement): FieldElement = square2(t, this)
 
     fun pow2k(t: FieldElement, k: Int): FieldElement = apply {
         require(k > 0)
@@ -335,43 +277,11 @@ data class FieldElement(
     // SqrtRatioI sets the fe to either `sqrt(u/v)` or `sqrt(i*u/v)` in constant
     // time, and returns fe.  This function always selects the nonnegative square
     // root.
-    fun sqrtRationI(u: FieldElement, v: FieldElement): Pair<FieldElement, Int> {
-        val w = FieldElement()
-        w.mul(u, v)
-
-        val r = FieldElement()
-        w.pow58()
-        r.mul(v, w)
-
-        val check = FieldElement()
-        check.square(r)
-        check.mul(check, v)
-
-        val neg_u = FieldElement()
-        val neg_u_i = FieldElement()
-        neg_u.negate(u)
-        neg_u_i.mul(neg_u, SQRT_M1)
-
-        val correctSignSqrt = check.constantTimeEquals(u)
-        val flippedSignSqrt = check.constantTimeEquals(neg_u)
-        val flippedSignSqrtI = check.constantTimeEquals(neg_u_i)
-
-        val rPrime = FieldElement()
-        rPrime.mul(r, SQRT_M1)
-        r.conditionalAssign(rPrime, flippedSignSqrt or flippedSignSqrtI)
-
-        // Chose the nonnegative square root.
-        val rIsNegative = r.isNegative()
-        r.conditionalNegate(rIsNegative)
-
-        set(r)
-
-        return this to (correctSignSqrt or flippedSignSqrt)
-    }
+    fun sqrtRatioI(u: FieldElement, v: FieldElement): Pair<FieldElement, Int> = sqrtRatioI(u, v, this)
 
     fun invSqrt() {
         one()
-        sqrtRationI(this, this)
+        sqrtRatioI(this, this)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -401,6 +311,122 @@ data class FieldElement(
         @JvmStatic
         fun minusOne() = FieldElement().apply {
             minusOne()
+        }
+
+        @JvmStatic
+        fun sqrtRatioI(
+            u: FieldElement,
+            v: FieldElement,
+            output: FieldElement = FieldElement()
+        ): Pair<FieldElement, Int> {
+            val w = mul(u, v)
+
+            val r = FieldElement()
+            w.pow58()
+            r.mul(u, w)
+
+            val check = FieldElement()
+            check.square(r)
+            check.mul(check, v)
+
+            val neg_u = FieldElement()
+            val neg_u_i = FieldElement()
+            neg_u.negate(u)
+            neg_u_i.mul(neg_u, SQRT_M1)
+
+            val correctSignSqrt = check.constantTimeEquals(u)
+            val flippedSignSqrt = check.constantTimeEquals(neg_u)
+            val flippedSignSqrtI = check.constantTimeEquals(neg_u_i)
+
+            val rPrime = FieldElement()
+            rPrime.mul(r, SQRT_M1)
+            r.conditionalAssign(rPrime, flippedSignSqrt or flippedSignSqrtI)
+
+            // Chose the nonnegative square root.
+            val rIsNegative = r.isNegative()
+            r.conditionalNegate(rIsNegative)
+
+            output.set(r)
+
+            return output to (correctSignSqrt or flippedSignSqrt)
+        }
+
+        fun fromBytes(bytes: ByteArray, offset: Int = 0, output: FieldElement = FieldElement()): FieldElement {
+            output.inner[0] = (bytes.getULongLE(offset)) and LOW_51_BIT_MASK
+            output.inner[1] = (bytes.getULongLE(offset + 6) shr 3) and LOW_51_BIT_MASK
+            output.inner[2] = (bytes.getULongLE(offset + 12) shr 6) and LOW_51_BIT_MASK
+            output.inner[3] = (bytes.getULongLE(offset + 19) shr 1) and LOW_51_BIT_MASK
+            output.inner[4] = (bytes.getULongLE(offset + 24) shr 12) and LOW_51_BIT_MASK
+            return output
+        }
+
+        fun square(x: FieldElement, output: FieldElement = FieldElement()): FieldElement {
+            fePow2k(output.inner, x.inner, 1)
+            return output
+        }
+
+        fun sub(a: FieldElement, b: FieldElement, output: FieldElement = FieldElement()): FieldElement {
+            // To avoid underflow, first add a multiple of p.
+            // Choose 16*p = p shl 4 to be larger than 54-bit b.
+            //
+            // If we could statically track the bitlengths of the limbs
+            // of every FieldElement, we could choose a multiple of p
+            // just bigger than b and avoid having to do a reduction.
+            return reduce(
+                ulongArrayOf(
+                    (a.inner[0] + P_TIMES_SIXTEEN_0) - b.inner[0],
+                    (a.inner[1] + P_TIMES_SIXTEEN_1234) - b.inner[1],
+                    (a.inner[2] + P_TIMES_SIXTEEN_1234) - b.inner[2],
+                    (a.inner[3] + P_TIMES_SIXTEEN_1234) - b.inner[3],
+                    (a.inner[4] + P_TIMES_SIXTEEN_1234) - b.inner[4],
+                ),
+                output
+            )
+        }
+
+        fun add(a: FieldElement, b: FieldElement, output: FieldElement = FieldElement()): FieldElement {
+            output.inner[0] = a.inner[0] + b.inner[0]
+            output.inner[1] = a.inner[1] + b.inner[1]
+            output.inner[2] = a.inner[2] + b.inner[2]
+            output.inner[3] = a.inner[3] + b.inner[3]
+            output.inner[4] = a.inner[4] + b.inner[4]
+            return output
+        }
+
+        fun reduce(limbs: ULongArray, output: FieldElement = FieldElement()): FieldElement {
+            var (l0, l1, l2, l3, l4) = limbs
+
+            val c0 = l0 shr 51
+            val c1 = l1 shr 51
+            val c2 = l2 shr 51
+            val c3 = l3 shr 51
+            val c4 = l4 shr 51
+
+            l0 = l0 and LOW_51_BIT_MASK
+            l1 = l1 and LOW_51_BIT_MASK
+            l2 = l2 and LOW_51_BIT_MASK
+            l3 = l3 and LOW_51_BIT_MASK
+            l4 = l4 and LOW_51_BIT_MASK
+
+            output.inner[0] = l0 + c4 * 19u
+            output.inner[1] = l1 + c0
+            output.inner[2] = l2 + c1
+            output.inner[3] = l3 + c2
+            output.inner[4] = l4 + c3
+            return output
+        }
+
+        fun mul(a: FieldElement, b: FieldElement, output: FieldElement = FieldElement()): FieldElement {
+            feMulCommon(output.inner, a.inner, b.inner)
+            return output
+        }
+
+        fun square2(t: FieldElement, output: FieldElement = FieldElement()): FieldElement {
+            fePow2k(output.inner, t.inner, 1)
+            for (i in 0 until 5) {
+                output.inner[i] *= 2uL
+            }
+            return output
         }
     }
 }

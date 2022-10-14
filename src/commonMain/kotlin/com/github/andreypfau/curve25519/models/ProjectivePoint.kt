@@ -2,6 +2,7 @@ package com.github.andreypfau.curve25519.models
 
 import com.github.andreypfau.curve25519.edwards.EdwardsPoint
 import com.github.andreypfau.curve25519.field.FieldElement
+import kotlin.jvm.JvmStatic
 
 data class ProjectivePoint(
     val x: FieldElement,
@@ -11,20 +12,44 @@ data class ProjectivePoint(
     constructor() : this(FieldElement(), FieldElement(), FieldElement())
 
     fun identity(): ProjectivePoint = apply {
-        x.zero()
-        y.one()
-        z.one()
+        identity(this)
     }
 
     fun set(cp: CompletedPoint): ProjectivePoint = apply {
-        x.mul(cp.x, cp.t)
-        y.mul(cp.y, cp.z)
-        z.mul(cp.z, cp.t)
+        from(cp, this)
     }
 
     fun set(ep: EdwardsPoint): ProjectivePoint = apply {
-        x.set(ep.x)
-        y.set(ep.y)
-        z.set(ep.z)
+        from(ep, this)
+    }
+
+    companion object {
+        @JvmStatic
+        fun identity(output: ProjectivePoint = ProjectivePoint()) = output.apply {
+            output.x.zero()
+            output.y.one()
+            output.z.one()
+        }
+
+        @JvmStatic
+        fun zero(output: ProjectivePoint = ProjectivePoint()) = output.apply {
+            output.x.zero()
+            output.y.one()
+            output.z.one()
+        }
+
+        @JvmStatic
+        fun from(cp: CompletedPoint, output: ProjectivePoint = ProjectivePoint()) = output.apply {
+            output.x.mul(cp.x, cp.t)
+            output.y.mul(cp.y, cp.z)
+            output.z.mul(cp.z, cp.t)
+        }
+
+        @JvmStatic
+        fun from(ep: EdwardsPoint, output: ProjectivePoint = ProjectivePoint()) = output.apply {
+            output.x.set(ep.x)
+            output.y.set(ep.y)
+            output.z.set(ep.z)
+        }
     }
 }

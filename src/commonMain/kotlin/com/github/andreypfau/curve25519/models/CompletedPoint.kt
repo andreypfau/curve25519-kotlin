@@ -2,6 +2,7 @@ package com.github.andreypfau.curve25519.models
 
 import com.github.andreypfau.curve25519.edwards.EdwardsPoint
 import com.github.andreypfau.curve25519.field.FieldElement
+import kotlin.jvm.JvmStatic
 
 data class CompletedPoint(
     val x: FieldElement,
@@ -11,107 +12,104 @@ data class CompletedPoint(
 ) {
     constructor() : this(FieldElement(), FieldElement(), FieldElement(), FieldElement())
 
-    fun double(pp: ProjectivePoint): CompletedPoint = apply {
-        val xx = FieldElement()
-        val yy = FieldElement()
-        val zz2 = FieldElement()
-        val xPlusYsq = FieldElement()
-        xx.square(pp.x)
-        yy.square(pp.y)
-        zz2.square2(pp.z)
-        xPlusYsq.add(pp.x, pp.y) // X+Y
-        xPlusYsq.square(xPlusYsq) // (X+Y)^2
+    fun add(a: EdwardsPoint, b: AffineNielsPoint) = add(a, b, this)
+    fun add(a: EdwardsPoint, b: ProjectiveNielsPoint) = add(a, b, this)
 
-        y.add(yy, xx)
-        x.sub(xPlusYsq, y)
-        z.sub(yy, xx)
-        t.sub(zz2, z)
-    }
+    fun sub(a: EdwardsPoint, b: AffineNielsPoint) = sub(a, b, this)
+    fun sub(a: EdwardsPoint, b: ProjectiveNielsPoint) = sub(a, b, this)
 
-    fun add(a: EdwardsPoint, b: ProjectiveNielsPoint): CompletedPoint = apply {
-        val pp = FieldElement()
-        val mm = FieldElement()
-        val tt2d = FieldElement()
-        val zz = FieldElement()
-        val zz2 = FieldElement()
-        pp.add(a.y, a.x) // a.Y + a.X
-        pp.mul(pp, b.yPlusX) // (a.Y + a.X) * b.Y_plus_X
-        mm.sub(a.y, a.x) // a.Y - a.X
-        mm.mul(mm, b.yMinusX) // (a.Y - a.X) * b.Y_minus_X
-        tt2d.mul(a.t, b.t2d)
-        zz.mul(a.z, b.z)
-        zz2.add(zz, zz)
-        x.sub(pp, mm)
-        y.add(pp, mm)
-        z.add(zz2, tt2d)
-        t.sub(zz2, tt2d)
-    }
+    fun double(pp: ProjectivePoint) = double(pp, this)
 
-    fun sub(a: EdwardsPoint, b: ProjectiveNielsPoint): CompletedPoint = apply {
-        val pm = FieldElement()
-        val mp = FieldElement()
-        val tt2d = FieldElement()
-        val zz = FieldElement()
-        val zz2 = FieldElement()
-        pm.add(a.y, a.x)
-        pm.mul(pm, b.yMinusX)
-        mp.sub(a.y, a.x)
-        mp.mul(mp, b.yPlusX)
-        tt2d.mul(a.t, b.t2d)
-        zz.mul(a.z, b.z)
-        zz2.add(zz, zz)
+    companion object {
+        @JvmStatic
+        fun double(pp: ProjectivePoint, output: CompletedPoint = CompletedPoint()): CompletedPoint {
+            val xx = FieldElement.square(pp.x)
+            val yy = FieldElement.square(pp.y)
+            val zz2 = FieldElement.square2(pp.z)
+            val xPlusYsq = FieldElement.add(pp.x, pp.y)
+            xPlusYsq.square(xPlusYsq)
 
-        x.sub(pm, mp)
-        y.add(pm, mp)
-        z.sub(zz2, tt2d)
-        t.add(zz2, tt2d)
-    }
+            output.y.add(yy, xx)
+            output.x.sub(xPlusYsq, output.y)
+            output.z.sub(yy, xx)
+            output.t.sub(zz2, output.z)
 
-    fun add(a: EdwardsPoint, b: AffineNielsPoint): CompletedPoint = apply {
-        val pp = FieldElement()
-        val mm = FieldElement()
-        val txy2d = FieldElement()
-        val z2 = FieldElement()
-        pp.add(a.y, a.x)
-        pp.mul(pp, b.yPlusX)
-        mm.sub(a.y, a.x)
-        mm.mul(mm, b.yMinusX)
-        txy2d.mul(a.t, b.xy2d)
-        z2.add(a.z, a.z)
+            return output
+        }
 
-        x.sub(pp, mm)
-        y.add(pp, mm)
-        z.add(z2, txy2d)
-        t.sub(z2, txy2d)
-    }
+        @JvmStatic
+        fun add(a: EdwardsPoint, b: ProjectiveNielsPoint, output: CompletedPoint = CompletedPoint()): CompletedPoint {
+            val pp = FieldElement.add(a.y, a.x)
+            pp.mul(pp, b.yPlusX)
+            val mm = FieldElement.sub(a.y, a.x)
+            mm.mul(mm, b.yMinusX)
+            val tt2d = FieldElement.mul(a.t, b.t2d)
+            val zz = FieldElement.mul(a.z, b.z)
+            val zz2 = FieldElement.add(zz, zz)
 
-    fun add(a: CompletedPoint, b: AffineNielsPoint): CompletedPoint = apply {
-        val aTmp = EdwardsPoint()
-        add(aTmp.set(a), b)
-    }
+            output.x.sub(pp, mm)
+            output.y.add(pp, mm)
+            output.z.add(zz2, tt2d)
+            output.t.sub(zz2, tt2d)
+            return output
+        }
 
-    fun sub(a: EdwardsPoint, b: AffineNielsPoint): CompletedPoint = apply {
-        val yPlusX = FieldElement()
-        val yMinusX = FieldElement()
-        val pm = FieldElement()
-        val mp = FieldElement()
-        val txy2d = FieldElement()
-        val z2 = FieldElement()
-        yPlusX.add(a.y, a.x)
-        yMinusX.sub(a.y, a.x)
-        pm.mul(yPlusX, b.yMinusX)
-        mp.mul(yMinusX, b.yPlusX)
-        txy2d.mul(a.t, b.xy2d)
-        z2.add(a.z, a.z)
+        @JvmStatic
+        fun sub(a: EdwardsPoint, b: ProjectiveNielsPoint, output: CompletedPoint = CompletedPoint()) = output.apply {
+            val pm = FieldElement()
+            val mp = FieldElement()
+            val tt2d = FieldElement()
+            val zz = FieldElement()
+            val zz2 = FieldElement()
+            pm.add(a.y, a.x)
+            pm.mul(pm, b.yMinusX)
+            mp.sub(a.y, a.x)
+            mp.mul(mp, b.yPlusX)
+            tt2d.mul(a.t, b.t2d)
+            zz.mul(a.z, b.z)
+            zz2.add(zz, zz)
 
-        x.sub(pm, mp)
-        y.add(pm, mp)
-        z.sub(z2, txy2d)
-        t.add(z2, txy2d)
-    }
+            x.sub(pm, mp)
+            y.add(pm, mp)
+            z.sub(zz2, tt2d)
+            t.add(zz2, tt2d)
+        }
 
-    fun sub(a: CompletedPoint, b: AffineNielsPoint): CompletedPoint = apply {
-        val aTmp = EdwardsPoint()
-        sub(aTmp.set(a), b)
+        @JvmStatic
+        fun add(a: EdwardsPoint, b: AffineNielsPoint, output: CompletedPoint = CompletedPoint()): CompletedPoint {
+            val pp = FieldElement().add(a.y, a.x)
+            pp.mul(pp, b.yPlusX)
+            val mm = FieldElement().sub(a.y, a.x)
+            mm.mul(mm, b.yMinusX)
+            val txy2d = FieldElement().mul(a.t, b.xy2d)
+            val z2 = FieldElement().add(a.z, a.z)
+
+            output.x.sub(pp, mm)
+            output.y.add(pp, mm)
+            output.z.add(z2, txy2d)
+            output.t.sub(z2, txy2d)
+            return output
+        }
+
+        @JvmStatic
+        fun sub(a: EdwardsPoint, b: AffineNielsPoint, output: CompletedPoint = CompletedPoint()) = output.apply {
+            val yPlusX = FieldElement()
+            val yMinusX = FieldElement()
+            val pm = FieldElement()
+            val mp = FieldElement()
+            val txy2d = FieldElement()
+            val z2 = FieldElement()
+            yPlusX.add(a.y, a.x)
+            yMinusX.sub(a.y, a.x)
+            pm.mul(yPlusX, b.yMinusX)
+            mp.mul(yMinusX, b.yPlusX)
+            txy2d.mul(a.t, b.xy2d)
+            z2.add(a.z, a.z)
+
+            x.sub(pm, mp)
+            y.add(pm, mp)
+            z.sub(z2, txy2d)
+            t.add(z2, txy2d)
+        }
     }
 }

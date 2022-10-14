@@ -5,9 +5,104 @@ package com.github.andreypfau.curve25519.internal
 import com.github.andreypfau.curve25519.constants.L
 import com.github.andreypfau.curve25519.constants.LFACTOR
 import com.github.andreypfau.curve25519.constants.LOW_52_BIT_NASK
+import com.github.andreypfau.curve25519.constants.tables.AFFINE_ODD_MULTIPLES_OF_BASEPOINT
+import com.github.andreypfau.curve25519.constants.tables.ProjectiveNielsPointLookupTable
+import com.github.andreypfau.curve25519.constants.tables.ProjectiveNielsPointNafLookupTable
+import com.github.andreypfau.curve25519.edwards.EdwardsPoint
+import com.github.andreypfau.curve25519.models.CompletedPoint
+import com.github.andreypfau.curve25519.models.ProjectivePoint
+import com.github.andreypfau.curve25519.scalar.Scalar
 
 private inline val ULongArray.hi get() = get(0)
 private inline val ULongArray.lo get() = get(1)
+
+internal fun varTimeDoubleScalarBaseMul(
+    a: Scalar,
+    A: EdwardsPoint,
+    b: Scalar,
+    output: EdwardsPoint = EdwardsPoint()
+): EdwardsPoint {
+    val tableA = ProjectiveNielsPointNafLookupTable.from(A)
+    val aNaf = a.nonAdjacentForm(5)
+    val bNaf = b.nonAdjacentForm(8)
+
+    var i = 0
+    for (j in 255 downTo 0) {
+        if (aNaf[j].toInt() != 0 || bNaf[j].toInt() != 0) {
+            i = j
+            break
+        }
+    }
+
+    val tableB = AFFINE_ODD_MULTIPLES_OF_BASEPOINT
+    val r = ProjectivePoint.identity()
+
+    val tEp = EdwardsPoint()
+    val t = CompletedPoint()
+
+    while (true) {
+        t.double(r)
+
+        if (aNaf[i] > 0) {
+            t.add(tEp.set(t), tableA.lookup(aNaf[i]))
+        } else if (aNaf[i] < 0) {
+            t.sub(tEp.set(t), tableA.lookup((-aNaf[i]).toByte()))
+        }
+
+        if (bNaf[i] > 0) {
+            t.add(tEp.set(t), tableB.lookup(bNaf[i]))
+        } else if (bNaf[i] < 0) {
+            t.sub(tEp.set(t), tableB.lookup((-bNaf[i]).toByte()))
+        }
+
+        r.set(t)
+
+        if (i == 0) break
+        i--
+    }
+
+    output.set(r)
+    return output
+}
+
+internal fun edwardsMulCommon(point: EdwardsPoint, scalar: Scalar, output: EdwardsPoint): EdwardsPoint = output.apply {
+    // Construct a lookup table of [P,2P,3P,4P,5P,6P,7P,8P]
+    val lookupTable = ProjectiveNielsPointLookupTable.from(point)
+    // Setting s = scalar, compute
+    //
+    //    s = s_0 + s_1*16^1 + ... + s_63*16^63,
+    //
+    // with `-8 <= s_i < 8` for `0 <= i < 63` and `-8 <= s_63 <= 8`.
+    val scalarDigits = scalar.toRadix16()
+    // Compute s*P as
+    //
+    //    s*P = P*(s_0 +   s_1*16^1 +   s_2*16^2 + ... +   s_63*16^63)
+    //    s*P =  P*s_0 + P*s_1*16^1 + P*s_2*16^2 + ... + P*s_63*16^63
+    //    s*P = P*s_0 + 16*(P*s_1 + 16*(P*s_2 + 16*( ... + P*s_63)...))
+    //
+    // We sum right-to-left.
+
+    // Unwrap first loop iteration to save computing 16*identity
+    val tmp3 = EdwardsPoint.identity()
+    var multiple = lookupTable.lookup(scalarDigits[63])
+    val tmp1 = CompletedPoint.add(tmp3, multiple)
+    val tmp2 = ProjectivePoint()
+    for (i in 62 downTo 0) {
+        tmp2.set(tmp1)    // tmp2 =    (prev) in P2 coords
+        tmp1.double(tmp2) // tmp1 =  2*(prev) in P1xP1 coords
+        tmp2.set(tmp1)    // tmp2 =  2*(prev) in P2 coords
+        tmp1.double(tmp2) // tmp1 =  4*(prev) in P1xP1 coords
+        tmp2.set(tmp1)    // tmp2 =  4*(prev) in P2 coords
+        tmp1.double(tmp2) // tmp1 =  8*(prev) in P1xP1 coords
+        tmp2.set(tmp1)    // tmp2 =  8*(prev) in P2 coords
+        tmp1.double(tmp2) // tmp1 = 16*(prev) in P1xP1 coords
+        tmp3.set(tmp1)    // tmp3 = 16*(prev) in P3 coords
+        multiple = lookupTable.lookup(scalarDigits[i])
+        tmp1.add(tmp3, multiple)
+        // Now tmp1 = s_i*P + 16*(prev) in P1xP1 coords
+    }
+    output.set(tmp1)
+}
 
 internal fun scalarMulInternal(a: ULongArray, b: ULongArray, output: ULongArray = ULongArray(18)): ULongArray =
     output.apply {

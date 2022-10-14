@@ -2,6 +2,8 @@ package com.github.andreypfau.curve25519.ed25519
 
 import com.github.andreypfau.curve25519.internal.ZeroRandom
 import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class Ed25519Test {
     @Test
@@ -10,6 +12,8 @@ class Ed25519Test {
         val message = "test message".encodeToByteArray()
         val signature = privateKey.sign(message)
         val publicKey = privateKey.publicKey()
-        println(signature)
+        assertTrue(publicKey.verify(message, signature))
+        val wrongMessage = "wrong message".encodeToByteArray()
+        assertFalse(publicKey.verify(wrongMessage, signature))
     }
 }

@@ -1,6 +1,8 @@
 package com.github.andreypfau.curve25519.constants
 
+import com.github.andreypfau.curve25519.edwards.CompressedEdwardsY
 import com.github.andreypfau.curve25519.field.FieldElement
+import com.github.andreypfau.curve25519.internal.hex
 import com.github.andreypfau.curve25519.scalar.UnpackedScalar
 
 internal val LOW_51_BIT_NASK = (1uL shl 51) - 1uL
@@ -59,5 +61,12 @@ internal val RR = UnpackedScalar(
     0x0003dceec73d217fu,
     0x000009411b7c309au,
 )
+
+@Suppress("SpellCheckingInspection")
+internal val NON_CANONICAL_SIGN_BITS =
+    arrayOf(
+        CompressedEdwardsY(hex("0100000000000000000000000000000000000000000000000000000000000080")),
+        CompressedEdwardsY(hex("ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"))
+    )
 
 internal const val LFACTOR = 0x51da312547e1bu

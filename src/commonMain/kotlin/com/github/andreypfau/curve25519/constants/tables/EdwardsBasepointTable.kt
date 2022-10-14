@@ -28,7 +28,7 @@ class EdwardsBasepointTable(
 
         for (i in 0 until 64 step 2) {
             val apt = get(i / 2).lookup(a[i])
-            out.set(sum.add(out, apt))
+            out.set(CompletedPoint.add(out, apt, sum))
         }
 
         return out

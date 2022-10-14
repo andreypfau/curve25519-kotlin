@@ -2,27 +2,46 @@ package com.github.andreypfau.curve25519.ed25519
 
 import com.github.andreypfau.curve25519.edwards.CompressedEdwardsY
 import com.github.andreypfau.curve25519.edwards.EdwardsPoint
-import com.github.andreypfau.curve25519.exceptioin.InvalidYCoordinateException
+import com.github.andreypfau.curve25519.internal.varTimeDoubleScalarBaseMul
+import com.github.andreypfau.curve25519.scalar.Scalar
+import com.github.andreypfau.kotlinio.crypto.digest.Sha512
+import com.github.andreypfau.kotlinio.pool.useInstance
 
 class Ed25519PublicKey internal constructor(
-    private val data: ByteArray
+    internal val data: ByteArray
 ) {
-    @Suppress("UNREACHABLE_CODE")
-    fun verify(message: ByteArray, signature: ByteArray): Boolean {
-        TODO()
+    fun verify(
+        message: ByteArray,
+        signature: ByteArray
+    ): Boolean {
+        val aCompressed = CompressedEdwardsY(data)
+        val a = EdwardsPoint.from(aCompressed)
 
-        if (signature.size != Ed25519.SIGNATURE_SIZE_BYTES) return false
-        val aCompressed = CompressedEdwardsY().apply {
-            set(data)
+        // hram = H(R,A,m)
+        val hash = Sha512.POOL.useInstance {
+            it.update(signature, 0, 32)
+            it.update(data)
+            it.update(message)
+            it.digest()
         }
-        // Unpack and ensure the public key is well-formed (A).
-        val a = EdwardsPoint().apply {
-            try {
-                set(aCompressed)
-            } catch (e: InvalidYCoordinateException) {
-                return false
-            }
+        val k = Scalar.fromWideByteArray(hash)
+        val s = Scalar.fromByteArray(signature, 32)
+
+        // A = -A (Since we want SB - H(R,A,m)A)
+        a.negate(a)
+
+        // Check that [8]R == [8](SB - H(R,A,m)A)), by computing
+        // [delta S]B - [delta A]H(R,A,m) - [delta]R, multiplying the
+        // result by the cofactor, and checking if the result is
+        // small order.
+        //
+        // Note: IsSmallOrder includes a cofactor multiply.
+        val r = varTimeDoubleScalarBaseMul(k, a, s)
+        val rCompressed = CompressedEdwardsY().apply {
+            set(r)
         }
+
+        return rCompressed.data.contentEquals(signature.copyOf(32))
     }
 
     companion object {

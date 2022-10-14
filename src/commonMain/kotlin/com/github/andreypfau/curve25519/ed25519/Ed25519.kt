@@ -52,13 +52,13 @@ object Ed25519 {
         digest[31] = (digest[31].toInt() or 64).toByte()
 
         val a = Scalar()
-        a.rawData(digest)
+        a.setByteArray(digest)
 
-        val aa = EdwardsPoint()
-        val aaCompressed = CompressedEdwardsY()
-        aaCompressed.set(aa.mul(ED25519_BASEPOINT_TABLE, a))
+        val A = EdwardsPoint()
+        val aCompressed = CompressedEdwardsY()
+        aCompressed.set(A.mul(ED25519_BASEPOINT_TABLE, a))
         seed.copyInto(output, offset)
-        aaCompressed.data.copyInto(output, offset + 32)
+        aCompressed.data.copyInto(output, offset + 32)
         return output
     }
 }

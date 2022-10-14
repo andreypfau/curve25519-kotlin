@@ -3,6 +3,7 @@ package com.github.andreypfau.curve25519.models
 import com.github.andreypfau.curve25519.constants.EDWARDS_D2
 import com.github.andreypfau.curve25519.edwards.EdwardsPoint
 import com.github.andreypfau.curve25519.field.FieldElement
+import kotlin.jvm.JvmStatic
 
 data class ProjectiveNielsPoint(
     val yPlusX: FieldElement,
@@ -12,19 +13,9 @@ data class ProjectiveNielsPoint(
 ) {
     constructor() : this(FieldElement(), FieldElement(), FieldElement(), FieldElement())
 
-    fun identity(): ProjectiveNielsPoint = apply {
-        yPlusX.one()
-        yMinusX.one()
-        z.one()
-        t2d.zero()
-    }
+    fun identity(): ProjectiveNielsPoint = identity(this)
 
-    fun setEdwards(ep: EdwardsPoint): ProjectiveNielsPoint = apply {
-        yPlusX.add(ep.y, ep.x)
-        yMinusX.sub(ep.y, ep.x)
-        z.set(ep.z)
-        t2d.mul(ep.t, EDWARDS_D2)
-    }
+    fun set(ep: EdwardsPoint): ProjectiveNielsPoint = from(ep, this)
 
     fun conditionalSelect(
         a: ProjectiveNielsPoint,
@@ -52,5 +43,25 @@ data class ProjectiveNielsPoint(
     ) {
         yPlusX.conditionalSwap(yMinusX, choise)
         t2d.conditionalNegate(choise)
+    }
+
+    companion object {
+        @JvmStatic
+        fun identity(output: ProjectiveNielsPoint = ProjectiveNielsPoint()): ProjectiveNielsPoint {
+            output.yPlusX.one()
+            output.yMinusX.one()
+            output.z.one()
+            output.t2d.zero()
+            return output
+        }
+
+        @JvmStatic
+        fun from(ep: EdwardsPoint, output: ProjectiveNielsPoint = ProjectiveNielsPoint()): ProjectiveNielsPoint {
+            output.yPlusX.add(ep.y, ep.x)
+            output.yMinusX.sub(ep.y, ep.x)
+            output.z.set(ep.z)
+            output.t2d.mul(ep.t, EDWARDS_D2)
+            return output
+        }
     }
 }

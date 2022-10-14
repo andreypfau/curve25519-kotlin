@@ -3,9 +3,11 @@
 package com.github.andreypfau.curve25519.scalar
 
 import com.github.andreypfau.curve25519.constants.R
+import com.github.andreypfau.curve25519.internal.getULongLE
 import com.github.andreypfau.curve25519.internal.scalarMontgomeryReduce
 import com.github.andreypfau.curve25519.internal.scalarMulInternal
 import kotlin.experimental.and
+import kotlin.jvm.JvmStatic
 
 class Scalar(
     val data: ByteArray = ByteArray(SIZE_BYTES)
@@ -14,20 +16,16 @@ class Scalar(
     fun toByteArray(output: ByteArray, offset: Int = 0): ByteArray =
         data.copyInto(output, offset)
 
-    fun rawData(input: ByteArray, offset: Int = 0) {
-        input.copyInto(data, 0, offset, offset + SIZE_BYTES)
-        data[31] = data[31] and 0x7f
+    fun setByteArray(input: ByteArray, offset: Int = 0) = apply {
+        fromByteArray(input, offset, this)
     }
 
     /**
      * Sets s to the scalar constructed by reducing a 512-bit
      * little-endian integer modulo the group order L.
      */
-    fun wideBytes(input: ByteArray, offset: Int = 0) {
-        val us = UnpackedScalar().apply {
-            bytesWide(input, offset)
-        }
-        pack(us)
+    fun setWideByteArray(input: ByteArray, offset: Int = 0) = apply {
+        fromWideByteArray(input, offset, this)
     }
 
     fun unpack(): UnpackedScalar = UnpackedScalar().also {
@@ -58,6 +56,49 @@ class Scalar(
         // Precondition note: output[63] is not recentered.  It
         // increases by carry <= 1.  Thus output[63] <= 8.
         return output
+    }
+
+    fun nonAdjacentForm(w: Int): ByteArray {
+        check(data[31] <= 127) { "scalar has high bit set illegally" }
+        require(w in 2..8) { "NAF digests must fir in byte" }
+
+        val naf = ByteArray(256)
+        val x = ULongArray(5)
+        for (i in 0 until 4) {
+            x[i] = data.getULongLE(i * 8)
+        }
+
+        val width = 1uL shl w
+        val windowsMask = width - 1uL
+
+        var pos = 0
+        var carry = 0uL
+        while (pos < 256) {
+            val idx = pos / 64
+            val bitIdx = pos % 64
+            val bitBuf = if (bitIdx < 64 - w) {
+                x[idx] shr bitIdx
+            } else {
+                (x[idx] shr bitIdx) or (x[1 + idx] shl (64 - bitIdx))
+            }
+            val window = carry + (bitBuf and windowsMask)
+
+            if (window and 1uL == 0uL) {
+                pos += 1
+                continue
+            }
+
+            if (window < width / 2uL) {
+                carry = 0uL
+                naf[pos] = window.toByte()
+            } else {
+                carry = 1uL
+                naf[pos] = (window.toByte() - width.toByte()).toByte()
+            }
+
+            pos += w
+        }
+        return naf
     }
 
     fun pack(us: UnpackedScalar) {
@@ -94,9 +135,26 @@ class Scalar(
         const val SIZE_BYTES = 32
         const val WIDE_SIZE_BYTES = 64
 
-        fun fromByteArray(byteArray: ByteArray): Scalar {
-            byteArray[31] = (byteArray[31].toInt() and 0x7F).toByte()
-            return Scalar(byteArray)
+        @JvmStatic
+        fun fromByteArray(
+            input: ByteArray,
+            offset: Int = 0,
+            output: Scalar = Scalar()
+        ): Scalar = output.apply {
+            input.copyInto(data, 0, offset, offset + SIZE_BYTES)
+            data[31] = data[31] and 0x7f
+        }
+
+        @JvmStatic
+        fun fromWideByteArray(
+            byteArray: ByteArray,
+            offset: Int = 0,
+            output: Scalar = Scalar()
+        ): Scalar = output.apply {
+            val us = UnpackedScalar().apply {
+                bytesWide(byteArray, offset)
+            }
+            pack(us)
         }
     }
 }

@@ -37,7 +37,7 @@ class Ed25519PrivateKey internal constructor(
             it.digest()
         }
         val r = Scalar().apply {
-            wideBytes(hashR)
+            setWideByteArray(hashR)
         }
 
         // R = rB
@@ -56,7 +56,7 @@ class Ed25519PrivateKey internal constructor(
             it.update(message)
             it.digest()
         }
-        s.wideBytes(hashRam)
+        s.setWideByteArray(hashRam)
 
         val a = Scalar().apply {
             bits(extsk)
