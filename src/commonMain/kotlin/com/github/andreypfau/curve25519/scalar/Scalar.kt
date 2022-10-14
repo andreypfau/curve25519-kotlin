@@ -32,12 +32,6 @@ class Scalar(
         it.bytes(data)
     }
 
-    fun bits(input: ByteArray, offset: Int = 0) {
-        input.copyInto(data, 0, offset, offset + SIZE_BYTES)
-        // Ensure that s < 2^255 by masking the high bit
-        data[31] = data[31] and 0b0111_1111
-    }
-
     fun toRadix16(output: ByteArray = ByteArray(64)): ByteArray {
         // Step 1: change radix.
         // Convert from radix 256 (bytes) to radix 16 (nibbles)
@@ -140,9 +134,10 @@ class Scalar(
             input: ByteArray,
             offset: Int = 0,
             output: Scalar = Scalar()
-        ): Scalar = output.apply {
-            input.copyInto(data, 0, offset, offset + SIZE_BYTES)
-            data[31] = data[31] and 0x7f
+        ): Scalar {
+            input.copyInto(output.data, 0, offset, offset + SIZE_BYTES)
+            output.data[31] = output.data[31] and 0x7f
+            return output
         }
 
         @JvmStatic

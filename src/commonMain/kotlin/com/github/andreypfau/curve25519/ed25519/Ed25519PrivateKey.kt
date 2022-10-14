@@ -36,9 +36,7 @@ class Ed25519PrivateKey internal constructor(
             it.update(message)
             it.digest()
         }
-        val r = Scalar().apply {
-            setWideByteArray(hashR)
-        }
+        val r = Scalar.fromWideByteArray(hashR)
 
         // R = rB
         val R = EdwardsPoint().apply {
@@ -58,9 +56,7 @@ class Ed25519PrivateKey internal constructor(
         }
         s.setWideByteArray(hashRam)
 
-        val a = Scalar().apply {
-            bits(extsk)
-        }
+        val a = Scalar.fromByteArray(extsk)
         s.mul(s, a)
 
         // S = (r + H(R,A,m)a)

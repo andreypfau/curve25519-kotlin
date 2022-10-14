@@ -21,14 +21,16 @@ class EdwardsBasepointTable(
         val sum = CompletedPoint()
         for (i in 1 until 64 step 2) {
             val apt = get(i / 2).lookup(a[i])
-            out.set(sum.add(out, apt))
+            sum.add(out, apt)
+            out.set(sum)
         }
 
         out.multByPow2(out, 4)
 
         for (i in 0 until 64 step 2) {
             val apt = get(i / 2).lookup(a[i])
-            out.set(CompletedPoint.add(out, apt, sum))
+            sum.add(out, apt)
+            out.set(sum)
         }
 
         return out
