@@ -41,11 +41,11 @@ class Ed25519PrivateKey internal constructor(
         }
 
         // R = rB
-        val bigRPoint = EdwardsPoint().apply {
+        val R = EdwardsPoint().apply {
             mulBasepoint(ED25519_BASEPOINT_TABLE, r)
         }
         val rCompressed = CompressedEdwardsY().apply {
-            set(bigRPoint)
+            set(R)
         }
 
         // S = H(R,A,m)
