@@ -7,32 +7,31 @@ import com.github.andreypfau.curve25519.constants.LOW_51_BIT_NASK
 private inline val ULongArray.lo get() = get(0)
 private inline val ULongArray.hi get() = get(1)
 
-private inline fun mul64(uInt128: ULongArray, a: ULong, b: ULong): ULongArray {
+private inline fun mul64(a: ULong, b: ULong): ULongArray {
+    val uInt128 = ULongArray(2)
     val (hi, lo) = mul64(a, b, uInt128)
     uInt128[0] = lo
     uInt128[1] = hi
     return uInt128
 }
 
-private inline fun mulAdd64(uInt128: ULongArray, a: ULong, b: ULong): ULongArray {
-    val hi_0 = uInt128.hi
-    val lo_0 = uInt128.lo
-    val (hi_1, lo_1) = mul64(a, b, uInt128)
-    val (lo_2, c) = add64(lo_0, lo_1, 0u, uInt128)
-    val (hi_2, _) = add64(hi_0, hi_1, c, uInt128)
-    uInt128[0] = lo_2
-    uInt128[1] = hi_2
-    return uInt128
+private inline fun mulAdd64(uInt128: ULongArray, a: ULong, b: ULong) = uInt128.apply {
+    val hi_0 = this.hi
+    val lo_0 = this.lo
+    val (hi_1, lo_1) = mul64(a, b, this)
+    val (lo_2, c) = add64(lo_0, lo_1, 0u, this)
+    val (hi_2, _) = add64(hi_0, hi_1, c, this)
+    this[0] = lo_2
+    this[1] = hi_2
 }
 
-private inline fun shift51(a: ULongArray, b: ULongArray): ULongArray {
+private inline fun shift51(a: ULongArray, b: ULongArray): ULongArray = b.apply {
     val tmp = shiftRightBy51(a)
     val buf = ULongArray(2)
     val (lo, carry) = add64(b.lo, tmp, 0u, buf)
     val (hi, _) = add64(b.hi, 0u, carry, buf)
     b[0] = lo
     b[1] = hi
-    return b
 }
 
 private inline fun shiftRightBy51(uInt128: ULongArray): ULong {
@@ -202,12 +201,6 @@ internal fun fePow2k(fe: ULongArray, t: ULongArray, k: Int) {
     var a3 = t[3]
     var a4 = t[4]
 
-    var r0 = ULongArray(2)
-    var r1 = ULongArray(2)
-    var r2 = ULongArray(2)
-    var r3 = ULongArray(2)
-    var r4 = ULongArray(2)
-
     repeat(k) {
         val a3_19 = a3 * 19u
         val a4_19 = a4 * 19u
@@ -217,23 +210,23 @@ internal fun fePow2k(fe: ULongArray, t: ULongArray, k: Int) {
         val d2 = a2 * 2u
         val d4 = a4 * 2u
 
-        r0 = mul64(r0, a0, a0)
+        var r0 = mul64(a0, a0)
         r0 = mulAdd64(r0, d1, a4_19)
         r0 = mulAdd64(r0, d2, a3_19)
 
-        r1 = mul64(r1, a3, a3_19)
+        var r1 = mul64(a3, a3_19)
         r1 = mulAdd64(r1, d0, a1)
         r1 = mulAdd64(r1, d2, a4_19)
 
-        r2 = mul64(r2, a1, a1)
+        var r2 = mul64(a1, a1)
         r2 = mulAdd64(r2, d0, a2)
         r2 = mulAdd64(r2, d4, a3_19)
 
-        r3 = mul64(r3, a4, a4_19)
+        var r3 = mul64(a4, a4_19)
         r3 = mulAdd64(r3, d0, a3)
         r3 = mulAdd64(r3, d1, a2)
 
-        r4 = mul64(r4, a2, a2)
+        var r4 = mul64(a2, a2)
         r4 = mulAdd64(r4, d0, a4)
         r4 = mulAdd64(r4, d1, a3)
 
