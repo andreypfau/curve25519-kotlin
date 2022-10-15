@@ -1,55 +1,52 @@
-@file:Suppress("OPT_IN_USAGE")
-
 package com.github.andreypfau.curve25519.edwards
 
-import com.github.andreypfau.curve25519.*
-import com.github.andreypfau.curve25519.constants.EDWARDS_D
+import com.github.andreypfau.curve25519.constants.NON_CANONICAL_SIGN_BITS
 import com.github.andreypfau.curve25519.field.FieldElement
-import com.github.andreypfau.curve25519.field.sqrtRatio
-import com.github.andreypfau.kotlinio.crypto.ct.Choise
+import kotlin.experimental.xor
+import kotlin.jvm.JvmStatic
 
-data class CompressedEdwardsY constructor(
-    internal val data: ByteArray = IDENTITY_BYTES,
+class CompressedEdwardsY constructor(
+    val data: ByteArray
 ) {
-    fun decompress(): EdwardsPoint? {
-        val y = FieldElement(data)
-        val z = FieldElement.ONE
-        val yy = y.square()
-        // u = y²-1
-        val u = yy - z
-        // v = dy²+1
-        val v = (yy * EDWARDS_D) + z
-        var (x, isValidCoordY) = FieldElement.sqrtRatio(u, v)
+    constructor() : this(ByteArray(SIZE_BYTES))
 
-        if (!isValidCoordY.toBoolean()) return null
-
-        val compressedSignBit = Choise((data[31].toUByte().toInt() shr 7).toUByte())
-        x = x.conditionalNegate(compressedSignBit)
-        val t = x * y
-        return EdwardsPoint(x, y, z, t)
+    fun set(byteArray: ByteArray, offset: Int = 0) {
+        byteArray.copyInto(data, 0, offset, offset + SIZE_BYTES)
     }
 
-    fun toByteArray(): ByteArray = toByteArray(ByteArray(32))
-    fun toByteArray(output: ByteArray, offset: Int = 0): ByteArray = data.copyInto(output, offset)
+    fun set(point: EdwardsPoint): CompressedEdwardsY = from(point, this)
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is CompressedEdwardsY) return false
-
-        if (!data.contentEquals(other.data)) return false
-
+    fun isCannonicalVartime(): Boolean {
+        if (!yCanonnical()) return false
+        for (invalidEncodings in NON_CANONICAL_SIGN_BITS) {
+            if (data.contentEquals(invalidEncodings.data)) return false
+        }
         return true
     }
 
-    override fun hashCode(): Int = data.contentHashCode()
+    private inline fun yCanonnical(): Boolean {
+        if (data[0].toUInt() < 237u) return true
+        for (i in 1 until 31) {
+            if (data[i].toUInt() != 255u) return true
+        }
+        return (data[31].toUInt() or 128u) != 255u
+    }
 
     companion object {
-        private val IDENTITY_BYTES = byteArrayOf(
-            1, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0
-        )
-        val IDENTITY = CompressedEdwardsY()
+        const val SIZE_BYTES = 32
+
+        @JvmStatic
+        fun from(ep: EdwardsPoint, output: CompressedEdwardsY = CompressedEdwardsY()): CompressedEdwardsY {
+            val x = FieldElement()
+            val y = FieldElement()
+            val recip = FieldElement()
+            recip.invert(ep.z)
+            x.mul(ep.x, recip)
+            y.mul(ep.y, recip)
+
+            y.toBytes(output.data)
+            output.data[31] = output.data[31] xor (x.isNegative() shl 7).toByte()
+            return output
+        }
     }
 }

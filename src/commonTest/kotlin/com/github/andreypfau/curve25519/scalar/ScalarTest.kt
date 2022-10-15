@@ -1,106 +1,44 @@
+@file:Suppress("OPT_IN_USAGE")
+
 package com.github.andreypfau.curve25519.scalar
 
-import com.github.andreypfau.curve25519.scalar.Scalar
-import com.github.andreypfau.curve25519.utils.byteArrayOf
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 
 class ScalarTest {
-    // x = 2238329342913194256032495932344128051776374960164957527413114840482143558222
-    val X = Scalar(
-        byteArrayOf(
-            0x4e, 0x5a, 0xb4, 0x34, 0x5d, 0x47, 0x08, 0x84,
-            0x59, 0x13, 0xb4, 0x64, 0x1b, 0xc2, 0x7d, 0x52,
-            0x52, 0xa5, 0x85, 0x10, 0x1b, 0xcc, 0x42, 0x44,
-            0xd4, 0x49, 0xf4, 0xa8, 0x79, 0xd9, 0xf2, 0x04,
-        )
+    // Note: x is 2^253-1 which is slightly larger than the largest scalar produced by
+    // this implementation (l-1), and should show there are no overflows for valid scalars
+    //
+    // x = 14474011154664524427946373126085988481658748083205070504932198000989141204991
+    // x = 7237005577332262213973186563042994240801631723825162898930247062703686954002 mod l
+    // x = 3057150787695215392275360544382990118917283750546154083604586903220563173085*R mod l in Montgomery form
+    val X = UnpackedScalar(
+        0x000fffffffffffffu, 0x000fffffffffffffu, 0x000fffffffffffffu, 0x000fffffffffffffu,
+        0x00001fffffffffffu
     )
 
-    // 1/x = 6859937278830797291664592131120606308688036382723378951768035303146619657244
-    val XINV = Scalar(
-        byteArrayOf(
-            0x1c, 0xdc, 0x17, 0xfc, 0xe0, 0xe9, 0xa5, 0xbb,
-            0xd9, 0x24, 0x7e, 0x56, 0xbb, 0x01, 0x63, 0x47,
-            0xbb, 0xba, 0x31, 0xed, 0xd5, 0xa9, 0xbb, 0x96,
-            0xd5, 0x0b, 0xcd, 0x7a, 0x3f, 0x96, 0x2a, 0x0f,
-        )
+    // y = 6145104759870991071742105800796537629880401874866217824609283457819451087098
+    val Y = UnpackedScalar(
+        0x000b75071e1458fau, 0x000bf9d75e1ecdacu, 0x000433d2baf0672bu, 0x0005fffcc11fad13u,
+        0x00000d96018bb825u
     )
-    val Y = Scalar(
-        byteArrayOf(
-            0x90, 0x76, 0x33, 0xfe, 0x1c, 0x4b, 0x66, 0xa4,
-            0xa2, 0x8d, 0x2d, 0xd7, 0x67, 0x83, 0x86, 0xc3,
-            0x53, 0xd0, 0xde, 0x54, 0x55, 0xd4, 0xfc, 0x9d,
-            0xe8, 0xef, 0x7a, 0xc3, 0x1f, 0x35, 0xbb, 0x05,
-        )
+
+    // x*y = 36752150652102274958925982391442301741 mod l
+    val XY = UnpackedScalar(
+        0x000ee6d76ba7632du, 0x000ed50d71d84e02u, 0x00000000001ba634u, 0x0000000000000000u,
+        0x0000000000000000u
     )
-    val X_TIMES_Y = Scalar(
-        byteArrayOf(
-            0x6c, 0x33, 0x74, 0xa1, 0x89, 0x4f, 0x62, 0x21,
-            0x0a, 0xaa, 0x2f, 0xe1, 0x86, 0xa6, 0xf9, 0x2c,
-            0xe0, 0xaa, 0x75, 0xc2, 0x77, 0x95, 0x81, 0xc2,
-            0x95, 0xfc, 0x08, 0x17, 0x9a, 0x73, 0x94, 0x0c,
-        )
-    )
-    val CANONICAL_2_256_MINUS_1 = Scalar(
-        byteArrayOf(
-            28, 149, 152, 141, 116, 49, 236, 214,
-            112, 207, 125, 115, 244, 91, 239, 198,
-            254, 255, 255, 255, 255, 255, 255, 255,
-            255, 255, 255, 255, 255, 255, 255, 15,
-        )
-    )
-    val A_SCALAR = Scalar(
-        byteArrayOf(
-            0x1a, 0x0e, 0x97, 0x8a, 0x90, 0xf6, 0x62, 0x2d,
-            0x37, 0x47, 0x02, 0x3f, 0x8a, 0xd8, 0x26, 0x4d,
-            0xa7, 0x58, 0xaa, 0x1b, 0x88, 0xe0, 0x40, 0xd1,
-            0x58, 0x9e, 0x7b, 0x7f, 0x23, 0x76, 0xef, 0x09,
-        )
-    )
-    val A_NAF = byteArrayOf(
-        0,13,0,0,0,0,0,0,0,7,0,0,0,0,0,0,-9,0,0,0,0,-11,0,0,0,0,3,0,0,0,0,1,
-        0,0,0,0,9,0,0,0,0,-5,0,0,0,0,0,0,3,0,0,0,0,11,0,0,0,0,11,0,0,0,0,0,
-        -9,0,0,0,0,0,-3,0,0,0,0,9,0,0,0,0,0,1,0,0,0,0,0,0,-1,0,0,0,0,0,9,0,
-        0,0,0,-15,0,0,0,0,-7,0,0,0,0,-9,0,0,0,0,0,5,0,0,0,0,13,0,0,0,0,0,-3,0,
-        0,0,0,-11,0,0,0,0,-7,0,0,0,0,-13,0,0,0,0,11,0,0,0,0,-9,0,0,0,0,0,1,0,0,
-        0,0,0,-15,0,0,0,0,1,0,0,0,0,7,0,0,0,0,0,0,0,0,5,0,0,0,0,0,13,0,0,0,
-        0,0,0,11,0,0,0,0,0,15,0,0,0,0,0,-9,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,7,
-        0,0,0,0,0,-15,0,0,0,0,0,15,0,0,0,0,15,0,0,0,0,15,0,0,0,0,0,1,0,0,0,0
-    )
-    val LARGEST_ED25519_S = Scalar(
-        byteArrayOf(
-            0xf8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f,
-        )
-    )
-    val CANONICAL_LARGEST_ED25519_S_PLUS_ONE = Scalar(
-        byteArrayOf(
-            0x7e, 0x34, 0x47, 0x75, 0x47, 0x4a, 0x7f, 0x97,
-            0x23, 0xb6, 0x3a, 0x8b, 0xe9, 0x2a, 0xe7, 0x6d,
-            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0f,
-        )
-    )
-    val CANONICAL_LARGEST_ED25519_S_MINUS_ONE = Scalar(
-        byteArrayOf(
-            0x7c, 0x34, 0x47, 0x75, 0x47, 0x4a, 0x7f, 0x97,
-            0x23, 0xb6, 0x3a, 0x8b, 0xe9, 0x2a, 0xe7, 0x6d,
-            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0f,
-        )
+
+    // x*y = 658448296334113745583381664921721413881518248721417041768778176391714104386*R mod l in Montgomery form
+    val XY_MONT = UnpackedScalar(
+        0x0006d52bf200cfd5u, 0x00033fb1d7021570u, 0x000f201bc07139d8u, 0x0001267e3e49169eu,
+        0x000007b839c00268u
     )
 
     @Test
-    fun fuzzer_testcase_reduction() {
-        val a_bytes  = byteArrayOf(
-            255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        )
-        val b_bytes = byteArrayOf(
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 210, 210, 210, 255, 255, 255, 255, 10
-        )
-        val c_bytes = byteArrayOf(
-            134, 171, 119, 216, 180, 128, 178, 62, 171, 132, 32, 62, 34, 119, 104, 193, 47, 215, 181, 250, 14, 207, 172, 93, 75, 207, 211, 103, 144, 204, 56, 14
-        )
+    fun montgomeryMul() {
+        val res = UnpackedScalar()
+        res.montgomeryMul(X, Y)
+        assertContentEquals(XY_MONT.data, res.data)
     }
 }
