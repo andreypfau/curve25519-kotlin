@@ -2,6 +2,7 @@ package com.github.andreypfau.curve25519.ed25519
 
 import com.github.andreypfau.curve25519.internal.ZeroRandom
 import kotlinx.benchmark.*
+import kotlin.test.Test
 
 @State(Scope.Benchmark)
 @OutputTimeUnit(BenchmarkTimeUnit.MICROSECONDS)
@@ -48,5 +49,11 @@ open class Ed25519Benchhmark {
         blackhole.consume(
             publicKey.verify(message, signature)
         )
+    }
+
+    @Test
+    fun a() {
+        setup()
+        publicKey.verify(message, signature)
     }
 }

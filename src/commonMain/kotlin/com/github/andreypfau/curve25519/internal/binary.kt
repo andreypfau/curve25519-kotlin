@@ -35,3 +35,6 @@ private inline fun hex(ch: Char): Int = when (ch) {
     in 'a'..'f' -> ch - 'a' + 10
     else -> throw (IllegalArgumentException("'$ch' is not a valid hex character"))
 }
+
+internal fun hex(byteArray: ByteArray) =
+    byteArray.joinToString("") { it.toUByte().toString(16).padStart(2, '0') }
