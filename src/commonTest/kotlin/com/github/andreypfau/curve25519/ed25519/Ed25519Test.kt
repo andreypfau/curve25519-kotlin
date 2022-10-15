@@ -6,10 +6,8 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 
-class Ed25519Test {
+open class Ed25519Test {
     @Test
     fun testSignVerify() {
         val privateKey = Ed25519.generateKey(ZeroRandom)
@@ -21,30 +19,19 @@ class Ed25519Test {
         assertFalse(publicKey.verify(wrongMessage, signature))
     }
 
-    @OptIn(ExperimentalTime::class)
     @Test
     fun testGolden() {
         GOLDEN_ED25519.lines().forEach { line ->
-            measureTime {
-                testGolden(line)
-            }.let {
-                println("$it - $line")
-            }
+            val goldenData = Ed25519GoldenData.parse(line)
+            testGolden(goldenData)
         }
     }
 
-    fun testGolden(line: String) {
-        var (
-            privateBytes,
-            pubKey,
-            msg,
-            sig
-        ) = line.split(":").map { hex(it) }
-
-        sig = sig.copyOf(Ed25519.SIGNATURE_SIZE_BYTES)
-        val priv = Ed25519PrivateKey(ByteArray(Ed25519.PRIVATE_KEY_SIZE_BYTES))
-        privateBytes.copyInto(priv.data)
-        pubKey.copyInto(priv.data, 32)
+    fun testGolden(goldenData: Ed25519GoldenData) {
+        val sig = goldenData.signature
+        val priv = goldenData.privateKey
+        val pubKey = goldenData.publicBytes
+        val msg = goldenData.message
 
         val sig2 = priv.sign(msg)
         assertContentEquals(sig, sig2)
@@ -57,5 +44,35 @@ class Ed25519Test {
 
         val seed = priv2.seed()
         assertContentEquals(priv.data.copyOf(32), seed)
+    }
+}
+
+data class Ed25519GoldenData(
+    val privateBytes: ByteArray,
+    val publicBytes: ByteArray,
+    val message: ByteArray,
+    val signatureBytes: ByteArray,
+) {
+    val signature = signatureBytes.copyOf(Ed25519.SIGNATURE_SIZE_BYTES)
+    val privateKey = Ed25519PrivateKey(ByteArray(Ed25519.PRIVATE_KEY_SIZE_BYTES)).also {
+        privateBytes.copyInto(it.data)
+        publicBytes.copyInto(it.data, 32)
+    }
+
+    companion object {
+        fun parse(line: String): Ed25519GoldenData {
+            val (
+                privateBytes,
+                pubKey,
+                msg,
+                sig
+            ) = line.split(":").map { hex(it) }
+            return Ed25519GoldenData(
+                privateBytes,
+                pubKey,
+                msg,
+                sig
+            )
+        }
     }
 }

@@ -7,8 +7,7 @@ import com.github.andreypfau.curve25519.constants.LOW_51_BIT_NASK
 private inline val ULongArray.lo get() = get(0)
 private inline val ULongArray.hi get() = get(1)
 
-private inline fun mul64(a: ULong, b: ULong): ULongArray {
-    val uInt128 = ULongArray(2)
+private inline fun mul64(uInt128: ULongArray, a: ULong, b: ULong): ULongArray {
     val (hi, lo) = mul64(a, b, uInt128)
     uInt128[0] = lo
     uInt128[1] = hi
@@ -203,6 +202,12 @@ internal fun fePow2k(fe: ULongArray, t: ULongArray, k: Int) {
     var a3 = t[3]
     var a4 = t[4]
 
+    var r0 = ULongArray(2)
+    var r1 = ULongArray(2)
+    var r2 = ULongArray(2)
+    var r3 = ULongArray(2)
+    var r4 = ULongArray(2)
+
     repeat(k) {
         val a3_19 = a3 * 19u
         val a4_19 = a4 * 19u
@@ -212,23 +217,23 @@ internal fun fePow2k(fe: ULongArray, t: ULongArray, k: Int) {
         val d2 = a2 * 2u
         val d4 = a4 * 2u
 
-        var r0 = mul64(a0, a0)
+        r0 = mul64(r0, a0, a0)
         r0 = mulAdd64(r0, d1, a4_19)
         r0 = mulAdd64(r0, d2, a3_19)
 
-        var r1 = mul64(a3, a3_19)
+        r1 = mul64(r1, a3, a3_19)
         r1 = mulAdd64(r1, d0, a1)
         r1 = mulAdd64(r1, d2, a4_19)
 
-        var r2 = mul64(a1, a1)
+        r2 = mul64(r2, a1, a1)
         r2 = mulAdd64(r2, d0, a2)
         r2 = mulAdd64(r2, d4, a3_19)
 
-        var r3 = mul64(a4, a4_19)
+        r3 = mul64(r3, a4, a4_19)
         r3 = mulAdd64(r3, d0, a3)
         r3 = mulAdd64(r3, d1, a2)
 
-        var r4 = mul64(a2, a2)
+        r4 = mul64(r4, a2, a2)
         r4 = mulAdd64(r4, d0, a4)
         r4 = mulAdd64(r4, d1, a3)
 

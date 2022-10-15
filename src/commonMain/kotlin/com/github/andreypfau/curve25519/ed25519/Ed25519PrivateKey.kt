@@ -33,7 +33,7 @@ class Ed25519PrivateKey internal constructor(
 
         val hashR = Sha512.POOL.useInstance {
             it.update(extsk, 32)
-            it.update(message)
+            it.update(message, 0, message.size)
             it.digest()
         }
         val r = Scalar.fromWideByteArray(hashR)
