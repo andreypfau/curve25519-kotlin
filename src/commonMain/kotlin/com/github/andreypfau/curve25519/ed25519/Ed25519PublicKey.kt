@@ -42,6 +42,12 @@ class Ed25519PublicKey internal constructor(
         return rCompressed.data.contentEquals(signature.copyOf(32))
     }
 
+    fun sharedKey(
+        privateKey: Ed25519PrivateKey,
+        output: ByteArray = ByteArray(32),
+        offset: Int = 0
+    ): ByteArray = Ed25519.sharedKey(privateKey, this, output, offset)
+
     companion object {
         const val SIZE_BYTES = Ed25519.PUBLIC_KEY_SIZE_BYTES
     }

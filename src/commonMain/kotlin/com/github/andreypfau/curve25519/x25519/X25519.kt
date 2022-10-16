@@ -5,11 +5,10 @@ import com.github.andreypfau.curve25519.ed25519.Ed25519PrivateKey
 import com.github.andreypfau.curve25519.ed25519.Ed25519PublicKey
 import com.github.andreypfau.curve25519.edwards.CompressedEdwardsY
 import com.github.andreypfau.curve25519.edwards.EdwardsPoint
+import com.github.andreypfau.curve25519.internal.constantTimeEquals
 import com.github.andreypfau.curve25519.internal.sha512
 import com.github.andreypfau.curve25519.montgomery.MontgomeryPoint
 import com.github.andreypfau.curve25519.scalar.Scalar
-import kotlin.experimental.and
-import kotlin.experimental.or
 
 object X25519 {
     const val SCALAR_SIZE_BYTES = 32
@@ -19,18 +18,22 @@ object X25519 {
         it[0] = 9
     }
 
-//    fun x25519(
-//        scalar: ByteArray,
-//        point: ByteArray,
-//        output: ByteArray = ByteArray(POINT_SIZE_BYTES),
-//        offset: Int = 0
-//    ): ByteArray {
-//        if (point[0] == BASEPOINT[0]) {
-//
-//        }
-//    }
+    fun x25519(
+        scalar: ByteArray,
+        point: ByteArray = BASEPOINT,
+        output: ByteArray = ByteArray(POINT_SIZE_BYTES),
+        offset: Int = 0
+    ): ByteArray {
+        if (point.contentEquals(BASEPOINT)) {
+            scalarBaseMult(scalar, output, offset)
+        } else {
+            scalarMult(scalar, point, output, offset)
+            check(output.constantTimeEquals(ByteArray(POINT_SIZE_BYTES)) != 1) { "bad input point: low order point" }
+        }
+        return output
+    }
 
-    fun toX22519(
+    fun toX25519(
         publicKey: Ed25519PublicKey,
         output: ByteArray = ByteArray(POINT_SIZE_BYTES),
         offset: Int = 0
@@ -47,38 +50,50 @@ object X25519 {
         output: ByteArray = ByteArray(SCALAR_SIZE_BYTES),
         offset: Int = 0
     ): ByteArray {
-        val digest = sha512(privateKey.data)
+        val digest = sha512(privateKey.data, 0, 32)
         clampScalar(digest)
-        digest.copyInto(output, offset)
+        digest.copyInto(output, offset, 0, SCALAR_SIZE_BYTES)
         return output
     }
 
     private fun scalarBaseMult(
-        scalar: ByteArray,
+        input: ByteArray,
         output: ByteArray = ByteArray(SCALAR_SIZE_BYTES),
         offset: Int = 0
     ): ByteArray {
-        val s = Scalar.fromByteArray(scalar)
-        val edP = EdwardsPoint()
-        edP.mulBasepoint(ED25519_BASEPOINT_TABLE, s)
+        val ec = ByteArray(SCALAR_SIZE_BYTES)
+        input.copyInto(ec)
+        clampScalar(ec)
+
+        val s = Scalar.fromByteArray(ec)
+        val edP = EdwardsPoint().mulBasepoint(ED25519_BASEPOINT_TABLE, s)
         val montP = MontgomeryPoint.from(edP)
         montP.data.copyInto(output, offset)
         return output
     }
 
-    private fun scalarMult(input: ByteArray, base: ByteArray, output: ByteArray, offset: Int = 0) {
-        val s = Scalar.fromByteArray(input)
-        val edP = EdwardsPoint.from(CompressedEdwardsY(base))
-        val montP = MontgomeryPoint.from(edP)
-        val montQ = MontgomeryPoint()
-        montQ.mul(montP, s)
-        montQ.data.copyInto(output, offset)
+    private fun scalarMult(
+        input: ByteArray,
+        base: ByteArray,
+        output: ByteArray = ByteArray(SCALAR_SIZE_BYTES),
+        offset: Int = 0
+    ): ByteArray {
+        val ec = ByteArray(SCALAR_SIZE_BYTES)
+        input.copyInto(ec)
+        clampScalar(ec)
+
+        val s = Scalar.fromByteArray(ec)
+        val montP = MontgomeryPoint(base)
+        montP.mul(montP, s)
+
+        montP.data.copyInto(output, offset)
+        return output
     }
 
     private fun clampScalar(scalar: ByteArray): ByteArray {
-        scalar[0] = scalar[0] and 248.toByte()
-        scalar[31] = scalar[31] and 127.toByte()
-        scalar[31] = scalar[31] or 64.toByte()
+        scalar[0] = (scalar[0].toInt() and 248).toByte()
+        scalar[31] = (scalar[31].toInt() and 127).toByte()
+        scalar[31] = (scalar[31].toInt() or 64).toByte()
         return scalar
     }
 }

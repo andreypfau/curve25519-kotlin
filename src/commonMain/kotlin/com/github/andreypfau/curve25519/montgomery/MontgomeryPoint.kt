@@ -61,6 +61,16 @@ class MontgomeryPoint(
             return output
         }
 
+        fun from(
+            pp: MontgomeryProjectivePoint,
+            output: MontgomeryPoint = MontgomeryPoint()
+        ): MontgomeryPoint {
+            val wInv = FieldElement.invert(pp.w)
+            val u = FieldElement.mul(pp.u, wInv)
+            u.toBytes(output.data)
+            return output
+        }
+
         fun mul(
             point: MontgomeryPoint,
             scalar: Scalar,
@@ -68,35 +78,18 @@ class MontgomeryPoint(
         ): MontgomeryPoint {
             val affineU = FieldElement.fromBytes(point.data)
             val x0 = MontgomeryProjectivePoint.identity()
-            val x1 = MontgomeryProjectivePoint(affineU, ONE)
-
-            val bits = scalar.data
-            for (i in 255 downTo 0) {
-                val choise = (bits[i + 1] xor bits[i]).toInt()
-
+            val x1 = MontgomeryProjectivePoint(
+                u = FieldElement.fromBytes(point.data),
+                w = FieldElement.one()
+            )
+            val bits = scalar.bits()
+            for (i in 254 downTo 0) {
+                val choise = (bits[i + 1].toInt() xor bits[i].toInt())
                 x0.conditionalSwap(x1, choise)
-
+                MontgomeryProjectivePoint.montgomeryDifferentialAddAndDouble(x0, x1, affineU)
             }
-
-            return output
-        }
-
-        private fun montgomeryDifferentialAddAndDouble(
-            p: MontgomeryProjectivePoint,
-            q: MontgomeryProjectivePoint,
-            affinePmQ: FieldElement
-        ) {
-            val t0 = FieldElement.add(p.u, p.w) // t0 = (u0 + w0)
-            val t1 = FieldElement.sub(p.u, p.w) // t1 = (u0 - w0)
-            val t2 = FieldElement.add(q.u, q.w) // t2 = (u1 + w1)
-            val t3 = FieldElement.sub(q.u, q.w) // t3 = (u1 - w1)
-
-            val t4 = FieldElement.square(t0) // t4 = (u0 + w0)^2
-            val t5 = FieldElement.square(t1) // t5 = (u0 - w0)^2
-
-            val t6 = FieldElement.sub(t4, t5) // t6 = (u0 + w0)^2 - (u0 - w0)^2
-
-
+            x0.conditionalSwap(x1, bits[0].toInt())
+            return from(x0, output)
         }
     }
 }

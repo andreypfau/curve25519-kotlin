@@ -5,6 +5,7 @@ import com.github.andreypfau.curve25519.edwards.CompressedEdwardsY
 import com.github.andreypfau.curve25519.edwards.EdwardsPoint
 import com.github.andreypfau.curve25519.internal.sha512
 import com.github.andreypfau.curve25519.scalar.Scalar
+import com.github.andreypfau.curve25519.x25519.X25519
 import kotlin.jvm.JvmStatic
 import kotlin.random.Random
 
@@ -58,5 +59,17 @@ object Ed25519 {
         seed.copyInto(output, offset)
         aCompressed.data.copyInto(output, offset + 32)
         return output
+    }
+
+    @JvmStatic
+    fun sharedKey(
+        privateKey: Ed25519PrivateKey,
+        publicKey: Ed25519PublicKey,
+        output: ByteArray = ByteArray(32),
+        offset: Int = 0
+    ): ByteArray {
+        val xPrivateKey = X25519.toX25519(privateKey)
+        val xPublicKey = X25519.toX25519(publicKey)
+        return X25519.x25519(xPrivateKey, xPublicKey, output, offset)
     }
 }

@@ -28,6 +28,10 @@ class Scalar(
         fromWideByteArray(input, offset, this)
     }
 
+    fun bits(): ByteArray = ByteArray(SIZE_BYTES * 8) {
+        ((data[it shr 3].toInt() shr (it and 7)) and 1).toByte()
+    }
+
     fun unpack(): UnpackedScalar = UnpackedScalar().also {
         it.bytes(data)
     }

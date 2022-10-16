@@ -129,9 +129,6 @@ data class EdwardsPoint(
             val v = FieldElement.mul(yy, EDWARDS_D)
             v.add(v, z)
             val (x, isValidYCoord) = FieldElement.sqrtRatioI(u, v)
-            println(u)
-            println(v)
-            println(x)
             require(isValidYCoord == 1) {
                 "Invalid Y coordinate"
             }

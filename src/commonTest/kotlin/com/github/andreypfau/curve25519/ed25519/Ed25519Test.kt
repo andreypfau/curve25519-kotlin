@@ -2,6 +2,7 @@ package com.github.andreypfau.curve25519.ed25519
 
 import com.github.andreypfau.curve25519.internal.ZeroRandom
 import com.github.andreypfau.curve25519.internal.hex
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertFalse
@@ -17,6 +18,20 @@ open class Ed25519Test {
         assertTrue(publicKey.verify(message, signature))
         val wrongMessage = "wrong message".encodeToByteArray()
         assertFalse(publicKey.verify(wrongMessage, signature))
+    }
+
+    @Test
+    fun sharedKey() {
+        val alicePrivate = Ed25519.generateKey(Random)
+        val alicePublic = alicePrivate.publicKey()
+
+        val bobPrivate = Ed25519.generateKey(Random)
+        val bobPublic = bobPrivate.publicKey()
+
+        val aliceShared = alicePrivate.sharedKey(bobPublic)
+        val bobShared = bobPrivate.sharedKey(alicePublic)
+
+        assertContentEquals(aliceShared, bobShared)
     }
 
     @Test

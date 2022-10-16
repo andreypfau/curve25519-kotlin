@@ -21,7 +21,7 @@ internal fun mul64(x: ULong, y: ULong, output: ULongArray = ULongArray(2)): ULon
 
 internal inline fun add64(x: ULong, y: ULong, carry: ULong, output: ULongArray = ULongArray(2)): ULongArray {
     output[0] = x + y + carry
-    output[1] = ((x and y) or ((x or y) and output.get(0).inv())) shr 63
+    output[1] = ((x and y) or ((x or y) and output[0].inv())) shr 63
     return output
 }
 
