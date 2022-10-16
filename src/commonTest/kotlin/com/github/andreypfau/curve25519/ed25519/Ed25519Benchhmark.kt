@@ -1,3 +1,5 @@
+@file:Suppress("SpellCheckingInspection")
+
 package com.github.andreypfau.curve25519.ed25519
 
 import com.github.andreypfau.curve25519.internal.ZeroRandom

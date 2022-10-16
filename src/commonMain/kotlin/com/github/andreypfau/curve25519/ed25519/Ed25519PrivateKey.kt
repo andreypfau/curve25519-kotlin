@@ -65,6 +65,12 @@ class Ed25519PrivateKey internal constructor(
         return output
     }
 
+    fun sharedKey(
+        publicKey: Ed25519PublicKey,
+        output: ByteArray = ByteArray(32),
+        offset: Int = 0
+    ): ByteArray = Ed25519.sharedKey(this, publicKey, output, offset)
+
     companion object {
         const val SIZE_BYTES = Ed25519.PRIVATE_KEY_SIZE_BYTES
     }

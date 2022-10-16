@@ -34,7 +34,7 @@ private inline fun shift51(a: ULongArray, b: ULongArray): ULongArray = b.apply {
     b[1] = hi
 }
 
-private inline fun shiftRightBy51(uInt128: ULongArray): ULong {
+internal inline fun shiftRightBy51(uInt128: ULongArray): ULong {
     return (uInt128.hi shl (64 - 51)) or (uInt128.lo shr 51)
 }
 
