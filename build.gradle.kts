@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.konan.target.HostManager
+
 plugins {
     kotlin("multiplatform")
     id("org.jetbrains.kotlinx.benchmark") version "0.4.5"
@@ -27,24 +29,48 @@ kotlin {
             useJUnitPlatform()
         }
     }
-    val nativeTargets = ArrayList<String>()
-//    if (HostManager.hostIsMac) {
-//        nativeTargets.add(macosX64().name)
-//        nativeTargets.add(macosArm64().name)
-//    }
-//    nativeTargets.add(linuxX64().name)
-//    nativeTargets.add(mingwX64().name)
+    val darwinTargets = if (HostManager.hostIsMac) {
+        listOf(
+            macosArm64().name,
+            macosX64().name
+        )
+    } else emptyList()
+    val linuxTargets = listOf(
+        linuxX64().name,
+        linuxArm64().name
+    )
+    val mingwTargets = listOf(
+        mingwX64().name
+    )
+    val nativeTargets = darwinTargets + linuxTargets + mingwTargets
 
     sourceSets {
         val nativeMain by creating {
             dependsOn(commonMain.get())
         }
-        val nativeTest by creating {
-            dependsOn(commonTest.get())
-        }
         nativeTargets.forEach {
             getByName("${it}Main").dependsOn(nativeMain)
-            getByName("${it}Test").dependsOn(nativeTest)
+        }
+
+        val darwinMain by creating {
+            dependsOn(nativeMain)
+        }
+        darwinTargets.forEach {
+            getByName("${it}Main").dependsOn(darwinMain)
+        }
+
+        val linuxMain by creating {
+            dependsOn(nativeMain)
+        }
+        linuxTargets.forEach {
+            getByName("${it}Main").dependsOn(linuxMain)
+        }
+
+        val mingwMain by creating {
+            dependsOn(nativeMain)
+        }
+        mingwTargets.forEach {
+            getByName("${it}Main").dependsOn(mingwMain)
         }
     }
 
@@ -69,7 +95,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/andreypfau/kotlinio")
+            url = uri("https://maven.pkg.github.com/andreypfau/curve25519-kotlin")
             credentials {
                 username = System.getenv("GITHUB_ACTOR")
                 password = System.getenv("GITHUB_TOKEN")
