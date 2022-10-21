@@ -59,3 +59,21 @@ benchmark {
         register("nativeTest")
     }
 }
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/andreypfau/kotlinio")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+        publications {
+            create<MavenPublication>("maven") {
+                from(components["kotlin"])
+            }
+        }
+    }
+}
