@@ -9,7 +9,6 @@ plugins {
 
 group = "io.github.andreypfau"
 version = "0.0.1"
-val isReleaseVersion = !version.toString().endsWith("SNAPSHOT")
 
 repositories {
     mavenLocal()
@@ -125,10 +124,10 @@ nexusPublishing {
 }
 
 signing {
+    isRequired = nexusPublishing.useStaging.get()
     val keyId = project.findProperty("signing.keyId") as? String ?: System.getenv("SIGNING_KEY_ID")
     val secretKey = project.findProperty("signing.secretKey") as? String ?: System.getenv("SIGNING_SECRET_KEY")
     val password = project.findProperty("signing.password") as? String ?: System.getenv("SIGNING_PASSWORD")
-    isRequired = isReleaseVersion && keyId != null && secretKey != null && password != null
     useInMemoryPgpKeys(
         keyId,
         secretKey,
