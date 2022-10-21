@@ -101,11 +101,13 @@ publishing {
             artifact(javadocJar.get())
             pom {
                 name.set("curve25519-kotlin")
-                description.set("CA pure Kotlin implementation of group operations on Curve25519.")
+                description.set("A pure Kotlin implementation of group operations on Curve25519.")
                 url.set("https://github.com/andreypfau/curve25519-kotlin")
                 licenses {
-                    name.set("GNU General Public License v3.0")
-                    url.set("https://www.gnu.org/licenses/gpl-3.0.en.html")
+                    license {
+                        name.set("GNU General Public License v3.0")
+                        url.set("https://www.gnu.org/licenses/gpl-3.0.en.html")
+                    }
                 }
                 developers {
                     developer {
