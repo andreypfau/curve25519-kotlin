@@ -5,8 +5,6 @@ import com.github.andreypfau.curve25519.edwards.CompressedEdwardsY
 import com.github.andreypfau.curve25519.edwards.EdwardsPoint
 import com.github.andreypfau.curve25519.internal.sha512
 import com.github.andreypfau.curve25519.scalar.Scalar
-import com.github.andreypfau.kotlinio.crypto.digest.Sha512
-import com.github.andreypfau.kotlinio.pool.useInstance
 
 class Ed25519PrivateKey internal constructor(
     internal val data: ByteArray
@@ -31,11 +29,7 @@ class Ed25519PrivateKey internal constructor(
         extsk[31] = (extsk[31].toInt() and 127).toByte()
         extsk[31] = (extsk[31].toInt() or 64).toByte()
 
-        val hashR = Sha512.POOL.useInstance {
-            it.update(extsk, 32)
-            it.update(message, 0, message.size)
-            it.digest()
-        }
+        val hashR = sha512(extsk.copyOfRange(32, extsk.size) + message)
         val r = Scalar.fromWideByteArray(hashR)
 
         // R = rB
@@ -44,12 +38,7 @@ class Ed25519PrivateKey internal constructor(
 
         // S = H(R,A,m)
         val s = Scalar()
-        val hashRam = Sha512.POOL.useInstance {
-            it.update(rCompressed.data)
-            it.update(data, 32)
-            it.update(message)
-            it.digest()
-        }
+        val hashRam = sha512(rCompressed.data + data.copyOfRange(32, data.size) + message)
         s.setWideByteArray(hashRam)
 
         val a = Scalar.fromByteArray(extsk)

@@ -1,6 +1,3 @@
-import org.jetbrains.kotlin.konan.target.HostManager
-import org.jetbrains.kotlin.konan.target.KonanTarget
-
 plugins {
     kotlin("multiplatform")
     id("org.jetbrains.kotlinx.benchmark") version "0.4.5"
@@ -30,25 +27,33 @@ kotlin {
             useJUnitPlatform()
         }
     }
-    if (HostManager.host == KonanTarget.MACOS_X64) macosX64("native")
-    if (HostManager.host == KonanTarget.MACOS_ARM64) macosArm64("native")
-    if (HostManager.hostIsLinux) linuxX64("native")
-    if (HostManager.hostIsMingw) mingwX64("native")
+    val nativeTargets = ArrayList<String>()
+//    if (HostManager.hostIsMac) {
+//        nativeTargets.add(macosX64().name)
+//        nativeTargets.add(macosArm64().name)
+//    }
+//    nativeTargets.add(linuxX64().name)
+//    nativeTargets.add(mingwX64().name)
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                api("com.github.andreypfau:kotlinio-crypto:+")
-            }
+        val nativeMain by creating {
+            dependsOn(commonMain.get())
         }
+        val nativeTest by creating {
+            dependsOn(commonTest.get())
+        }
+        nativeTargets.forEach {
+            getByName("${it}Main").dependsOn(nativeMain)
+            getByName("${it}Test").dependsOn(nativeTest)
+        }
+    }
+
+    sourceSets {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 api("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:0.4.5")
             }
-        }
-        val nativeTest by getting {
-            dependsOn(commonTest)
         }
     }
 }

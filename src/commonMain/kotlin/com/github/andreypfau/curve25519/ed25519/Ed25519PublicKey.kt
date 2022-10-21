@@ -2,10 +2,9 @@ package com.github.andreypfau.curve25519.ed25519
 
 import com.github.andreypfau.curve25519.edwards.CompressedEdwardsY
 import com.github.andreypfau.curve25519.edwards.EdwardsPoint
+import com.github.andreypfau.curve25519.internal.sha512
 import com.github.andreypfau.curve25519.internal.varTimeDoubleScalarBaseMul
 import com.github.andreypfau.curve25519.scalar.Scalar
-import com.github.andreypfau.kotlinio.crypto.digest.Sha512
-import com.github.andreypfau.kotlinio.pool.useInstance
 
 class Ed25519PublicKey internal constructor(
     internal val data: ByteArray
@@ -18,12 +17,7 @@ class Ed25519PublicKey internal constructor(
         val a = EdwardsPoint.from(aCompressed)
 
         // hram = H(R,A,m)
-        val hash = Sha512.POOL.useInstance {
-            it.update(signature, 0, 32)
-            it.update(data)
-            it.update(message)
-            it.digest()
-        }
+        val hash = sha512(signature.copyOfRange(0, 32) + data + message)
         val k = Scalar.fromWideByteArray(hash)
         val s = Scalar.fromByteArray(signature, 32)
 
