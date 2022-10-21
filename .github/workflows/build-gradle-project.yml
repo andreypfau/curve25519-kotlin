@@ -1,24 +1,19 @@
 name: Build Gradle project
 
-on:
-  push:
+on: [ push ]
 
 jobs:
   build-gradle-project:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout project sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Run build with Gradle Wrapper
-        run: ./gradlew build
-      - name: Publish artifact
-        env:
-          SIGNING_SECRET_KEY: ${{ secrets.SIGNING_SECRET_KEY }}
-          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ./gradlew publish closeAndReleaseStagingRepository
+        uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
+        with:
+          arguments: build

@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.konan.target.HostManager
+
 plugins {
     kotlin("multiplatform")
     id("org.jetbrains.kotlinx.benchmark") version "0.4.5"
@@ -20,59 +22,67 @@ allOpen {
 }
 
 kotlin {
-    jvm {
-        withJava()
-        compilations.all {
-            kotlinOptions.jvmTarget = "1.8"
-        }
-        testRuns["test"].executionTask.configure {
-            useJUnitPlatform()
+    val isCI = System.getenv("CI") == "true"
+    val isCIMacOS = isCI && HostManager.hostIsMac
+    if (!isCIMacOS) {
+        jvm {
+            withJava()
+            compilations.all {
+                kotlinOptions.jvmTarget = "1.8"
+            }
+            testRuns["test"].executionTask.configure {
+                useJUnitPlatform()
+            }
         }
     }
-//    val darwinTargets = if (HostManager.hostIsMac) {
-//        listOf(
-//            macosArm64().name,
-//            macosX64().name
-//        )
-//    } else emptyList()
-//    val linuxTargets = listOf(
-//        linuxX64().name,
-//        linuxArm64().name
-//    )
-//    val mingwTargets = listOf(
-//        mingwX64().name
-//    )
-//    val nativeTargets = darwinTargets + linuxTargets + mingwTargets
-//
-//    sourceSets {
-//        val nativeMain by creating {
-//            dependsOn(commonMain.get())
-//        }
-//        nativeTargets.forEach {
-//            getByName("${it}Main").dependsOn(nativeMain)
-//        }
-//
-//        val darwinMain by creating {
-//            dependsOn(nativeMain)
-//        }
-//        darwinTargets.forEach {
-//            getByName("${it}Main").dependsOn(darwinMain)
-//        }
-//
-//        val linuxMain by creating {
-//            dependsOn(nativeMain)
-//        }
-//        linuxTargets.forEach {
-//            getByName("${it}Main").dependsOn(linuxMain)
-//        }
-//
-//        val mingwMain by creating {
-//            dependsOn(nativeMain)
-//        }
-//        mingwTargets.forEach {
-//            getByName("${it}Main").dependsOn(mingwMain)
-//        }
-//    }
+    val darwinTargets = if (HostManager.hostIsMac) {
+        listOf(
+            macosArm64().name,
+            macosX64().name
+        )
+    } else emptyList()
+    val linuxTargets = if (!isCIMacOS) {
+        listOf(
+            linuxX64().name,
+            linuxArm64().name
+        )
+    } else emptyList()
+    val mingwTargets = if (!isCIMacOS) {
+        listOf(
+            mingwX64().name
+        )
+    } else emptyList()
+    val nativeTargets = darwinTargets + linuxTargets + mingwTargets
+
+    sourceSets {
+        val nativeMain by creating {
+            dependsOn(commonMain.get())
+        }
+        nativeTargets.forEach {
+            getByName("${it}Main").dependsOn(nativeMain)
+        }
+
+        val darwinMain by creating {
+            dependsOn(nativeMain)
+        }
+        darwinTargets.forEach {
+            getByName("${it}Main").dependsOn(darwinMain)
+        }
+
+        val linuxMain by creating {
+            dependsOn(nativeMain)
+        }
+        linuxTargets.forEach {
+            getByName("${it}Main").dependsOn(linuxMain)
+        }
+
+        val mingwMain by creating {
+            dependsOn(nativeMain)
+        }
+        mingwTargets.forEach {
+            getByName("${it}Main").dependsOn(mingwMain)
+        }
+    }
 
     sourceSets {
         val commonTest by getting {
