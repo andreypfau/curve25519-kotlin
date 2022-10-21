@@ -19,4 +19,4 @@ jobs:
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ./gradlew closeAndReleaseRepository
+          ./gradlew publish closeAndReleaseRepository

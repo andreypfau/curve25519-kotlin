@@ -2,6 +2,7 @@ plugins {
     kotlin("multiplatform")
     id("org.jetbrains.kotlinx.benchmark") version "0.4.5"
     id("org.jetbrains.kotlin.plugin.allopen") version "1.7.20"
+    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
     `maven-publish`
     signing
 }
@@ -92,17 +93,16 @@ benchmark {
 }
 
 publishing {
-    repositories {
-        maven {
-            name = "OSSRH"
-            credentials {
-                username = project.findProperty("ossrhUsername") as? String ?: System.getenv("OSSRH_USERNAME")
-                password = project.findProperty("ossrhPassword") as? String ?: System.getenv("OSSRH_PASSWORD")
+    publications {
+        create<MavenPublication>("main") {
+            from(components["kotlin"])
+            pom {
+                name.set("curve25519-kotlin")
+                description.set("CA pure Kotlin implementation of group operations on Curve25519.")
+                url.set("https://github.com/andreypfau/curve25519-kotlin")
             }
-            val releaseRepo = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-            val snapshotRepo = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-            url = if (isReleaseVersion) releaseRepo else snapshotRepo
         }
+    }
 //        maven {
 //            name = "GitHubPackages"
 //            url = uri("https://maven.pkg.github.com/andreypfau/curve25519-kotlin")
@@ -111,15 +111,15 @@ publishing {
 //                password = System.getenv("GITHUB_TOKEN")
 //            }
 //        }
-        publications {
-            create<MavenPublication>("main") {
-                from(components["kotlin"])
-                pom {
-                    name.set("curve25519-kotlin")
-                    description.set("CA pure Kotlin implementation of group operations on Curve25519.")
-                    url.set("https://github.com/andreypfau/curve25519-kotlin")
-                }
-            }
+}
+
+nexusPublishing {
+    repositories {
+        create("OSSRH") {
+            username.set(project.findProperty("ossrhUsername") as? String ?: System.getenv("OSSRH_USERNAME"))
+            password.set(project.findProperty("ossrhPassword") as? String ?: System.getenv("OSSRH_PASSWORD"))
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
         }
     }
 }
@@ -128,7 +128,7 @@ signing {
     val keyId = project.findProperty("signing.keyId") as? String ?: System.getenv("SIGNING_KEY_ID")
     val secretKey = project.findProperty("signing.secretKey") as? String ?: System.getenv("SIGNING_SECRET_KEY")
     val password = project.findProperty("signing.password") as? String ?: System.getenv("SIGNING_PASSWORD")
-    isRequired = isReleaseVersion && keyId != null && secretKey != null && password != null
+    isRequired = nexusPublishing.useStaging.get() && keyId != null && secretKey != null && password != null
     useInMemoryPgpKeys(
         keyId,
         secretKey,
