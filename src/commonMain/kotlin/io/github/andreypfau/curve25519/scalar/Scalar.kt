@@ -7,6 +7,7 @@ import io.github.andreypfau.curve25519.internal.getULongLE
 import io.github.andreypfau.curve25519.internal.scalarMontgomeryReduce
 import io.github.andreypfau.curve25519.internal.scalarMulInternal
 import kotlin.experimental.and
+import kotlin.jvm.JvmStatic
 
 class Scalar(
     val data: ByteArray = ByteArray(SIZE_BYTES)

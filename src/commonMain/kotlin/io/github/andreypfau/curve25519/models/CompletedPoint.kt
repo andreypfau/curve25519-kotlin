@@ -2,6 +2,7 @@ package io.github.andreypfau.curve25519.models
 
 import io.github.andreypfau.curve25519.edwards.EdwardsPoint
 import io.github.andreypfau.curve25519.field.FieldElement
+import kotlin.jvm.JvmStatic
 
 data class CompletedPoint(
     val x: FieldElement,

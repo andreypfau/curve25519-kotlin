@@ -6,6 +6,7 @@ import io.github.andreypfau.curve25519.edwards.EdwardsPoint
 import io.github.andreypfau.curve25519.internal.sha512
 import io.github.andreypfau.curve25519.scalar.Scalar
 import io.github.andreypfau.curve25519.x25519.X25519
+import kotlin.jvm.JvmStatic
 import kotlin.random.Random
 
 object Ed25519 {

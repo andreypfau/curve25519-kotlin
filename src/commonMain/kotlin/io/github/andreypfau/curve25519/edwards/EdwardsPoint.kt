@@ -10,6 +10,7 @@ import io.github.andreypfau.curve25519.models.CompletedPoint
 import io.github.andreypfau.curve25519.models.ProjectiveNielsPoint
 import io.github.andreypfau.curve25519.models.ProjectivePoint
 import io.github.andreypfau.curve25519.scalar.Scalar
+import kotlin.jvm.JvmStatic
 
 data class EdwardsPoint(
     val x: FieldElement,

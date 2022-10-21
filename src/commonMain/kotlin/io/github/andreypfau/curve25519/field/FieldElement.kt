@@ -5,6 +5,7 @@ package io.github.andreypfau.curve25519.field
 import io.github.andreypfau.curve25519.constants.SQRT_M1
 import io.github.andreypfau.curve25519.edwards.CompressedEdwardsY
 import io.github.andreypfau.curve25519.internal.*
+import kotlin.jvm.JvmStatic
 
 private val LOW_51_BIT_MASK = (1uL shl 51) - 1uL
 private const val P_TIMES_SIXTEEN_0 = 36028797018963664uL

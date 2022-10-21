@@ -7,6 +7,7 @@ import io.github.andreypfau.curve25519.edwards.EdwardsPoint
 import io.github.andreypfau.curve25519.field.FieldElement
 import io.github.andreypfau.curve25519.scalar.Scalar
 import kotlin.experimental.xor
+import kotlin.jvm.JvmStatic
 
 class MontgomeryPoint(
     val data: ByteArray = ByteArray(SIZE_BYTES)

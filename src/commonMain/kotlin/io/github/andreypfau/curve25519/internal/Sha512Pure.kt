@@ -5,6 +5,7 @@ package io.github.andreypfau.curve25519.internal
 // Copy from: https://github.com/ionspin/kotlin-multiplatform-crypto
 class Sha512Pure {
     val MAX_HASH_BYTES: Int = 32
+
     companion object {
         const val BLOCK_SIZE = 1024
         const val BLOCK_SIZE_IN_BYTES = 128
@@ -127,13 +128,13 @@ class Sha512Pure {
 
             val digest =
                 h[0].toPaddedByteArray() +
-                        h[1].toPaddedByteArray() +
-                        h[2].toPaddedByteArray() +
-                        h[3].toPaddedByteArray() +
-                        h[4].toPaddedByteArray() +
-                        h[5].toPaddedByteArray() +
-                        h[6].toPaddedByteArray() +
-                        h[7].toPaddedByteArray()
+                    h[1].toPaddedByteArray() +
+                    h[2].toPaddedByteArray() +
+                    h[3].toPaddedByteArray() +
+                    h[4].toPaddedByteArray() +
+                    h[5].toPaddedByteArray() +
+                    h[6].toPaddedByteArray() +
+                    h[7].toPaddedByteArray()
             return digest
         }
 
@@ -166,13 +167,13 @@ class Sha512Pure {
                 when (it) {
                     in 0 until 16 -> {
                         val collected = (chunk[(it * 8)].toULong() shl 56) +
-                                (chunk[(it * 8) + 1].toULong() shl 48) +
-                                (chunk[(it * 8) + 2].toULong() shl 40) +
-                                (chunk[(it * 8) + 3].toULong() shl 32) +
-                                (chunk[(it * 8) + 4].toULong() shl 24) +
-                                (chunk[(it * 8) + 5].toULong() shl 16) +
-                                (chunk[(it * 8) + 6].toULong() shl 8) +
-                                (chunk[(it * 8) + 7].toULong())
+                            (chunk[(it * 8) + 1].toULong() shl 48) +
+                            (chunk[(it * 8) + 2].toULong() shl 40) +
+                            (chunk[(it * 8) + 3].toULong() shl 32) +
+                            (chunk[(it * 8) + 4].toULong() shl 24) +
+                            (chunk[(it * 8) + 5].toULong() shl 16) +
+                            (chunk[(it * 8) + 6].toULong() shl 8) +
+                            (chunk[(it * 8) + 7].toULong())
                         collected
                     }
 
@@ -345,13 +346,13 @@ class Sha512Pure {
         }
 
         val digest = h[0].toPaddedByteArray() +
-                h[1].toPaddedByteArray() +
-                h[2].toPaddedByteArray() +
-                h[3].toPaddedByteArray() +
-                h[4].toPaddedByteArray() +
-                h[5].toPaddedByteArray() +
-                h[6].toPaddedByteArray() +
-                h[7].toPaddedByteArray()
+            h[1].toPaddedByteArray() +
+            h[2].toPaddedByteArray() +
+            h[3].toPaddedByteArray() +
+            h[4].toPaddedByteArray() +
+            h[5].toPaddedByteArray() +
+            h[6].toPaddedByteArray() +
+            h[7].toPaddedByteArray()
         digested = true
         return digest
     }

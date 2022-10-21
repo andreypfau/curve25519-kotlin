@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "io.github.andreypfau"
-version = "0.0.1"
+version = "0.0.2"
 
 repositories {
     mavenLocal()
@@ -34,6 +34,11 @@ kotlin {
                 useJUnitPlatform()
             }
         }
+        // TODO: Fix tests fo JS
+//        js {
+//            nodejs()
+//            browser()
+//        }
     }
     val darwinTargets = if (HostManager.hostIsMac) {
         listOf(
@@ -53,6 +58,7 @@ kotlin {
         )
     } else emptyList()
     val nativeTargets = darwinTargets + linuxTargets + mingwTargets
+    println("Native targets: \n${nativeTargets.joinToString("\n* ", prefix = "* ")}")
 
     sourceSets {
         val nativeMain by creating {
@@ -134,14 +140,16 @@ publishing {
             }
         }
     }
-//        maven {
-//            name = "GitHubPackages"
-//            url = uri("https://maven.pkg.github.com/andreypfau/curve25519-kotlin")
-//            credentials {
-//                username = System.getenv("GITHUB_ACTOR")
-//                password = System.getenv("GITHUB_TOKEN")
-//            }
-//        }
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/andreypfau/curve25519-kotlin")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
 }
 
 nexusPublishing {

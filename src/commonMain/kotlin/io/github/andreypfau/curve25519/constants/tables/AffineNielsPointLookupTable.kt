@@ -2,6 +2,7 @@ package io.github.andreypfau.curve25519.constants.tables
 
 import io.github.andreypfau.curve25519.internal.constantTimeEquals
 import io.github.andreypfau.curve25519.models.AffineNielsPoint
+import kotlin.jvm.JvmStatic
 
 class AffineNielsPointLookupTable(
     val points: Array<AffineNielsPoint> = Array(64) { AffineNielsPoint() }

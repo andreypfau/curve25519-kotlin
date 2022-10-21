@@ -3,6 +3,7 @@
 package io.github.andreypfau.curve25519.montgomery
 
 import io.github.andreypfau.curve25519.field.FieldElement
+import kotlin.jvm.JvmStatic
 
 data class MontgomeryProjectivePoint(
     val u: FieldElement,

@@ -3,6 +3,7 @@ package io.github.andreypfau.curve25519.edwards
 import io.github.andreypfau.curve25519.constants.NON_CANONICAL_SIGN_BITS
 import io.github.andreypfau.curve25519.field.FieldElement
 import kotlin.experimental.xor
+import kotlin.jvm.JvmStatic
 
 class CompressedEdwardsY constructor(
     val data: ByteArray

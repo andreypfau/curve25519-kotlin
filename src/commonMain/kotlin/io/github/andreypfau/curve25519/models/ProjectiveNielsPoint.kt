@@ -3,6 +3,7 @@ package io.github.andreypfau.curve25519.models
 import io.github.andreypfau.curve25519.constants.EDWARDS_D2
 import io.github.andreypfau.curve25519.edwards.EdwardsPoint
 import io.github.andreypfau.curve25519.field.FieldElement
+import kotlin.jvm.JvmStatic
 
 data class ProjectiveNielsPoint(
     val yPlusX: FieldElement,

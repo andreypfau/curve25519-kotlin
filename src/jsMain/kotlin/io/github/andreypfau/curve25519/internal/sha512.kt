@@ -2,10 +2,6 @@
 
 package io.github.andreypfau.curve25519.internal
 
-import kotlinx.cinterop.*
-import platform.windows.*
-
-// TODO: Use the native Windows API to calculate SHA512
 internal actual fun sha512(
     rawData: ByteArray,
     offset: Int,
@@ -14,6 +10,7 @@ internal actual fun sha512(
     outputOffset: Int,
     outputLength: Int
 ): ByteArray {
+    // TODO: Use the native JS API to calculate SHA512
     val sha512 = Sha512Pure()
     sha512.update(rawData.copyOfRange(offset, offset + length).toUByteArray())
     sha512.digest().toByteArray().copyInto(output, outputOffset, 0, outputLength)
