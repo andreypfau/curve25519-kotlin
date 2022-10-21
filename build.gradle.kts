@@ -91,14 +91,34 @@ benchmark {
     }
 }
 
+val javadocJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("javadoc")
+}
+
 publishing {
     publications {
-        create<MavenPublication>("main") {
-            from(components["kotlin"])
+        withType<MavenPublication> {
+            artifact(javadocJar.get())
             pom {
                 name.set("curve25519-kotlin")
                 description.set("CA pure Kotlin implementation of group operations on Curve25519.")
                 url.set("https://github.com/andreypfau/curve25519-kotlin")
+                licenses {
+                    name.set("GNU General Public License v3.0")
+                    url.set("https://www.gnu.org/licenses/gpl-3.0.en.html")
+                }
+                developers {
+                    developer {
+                        id.set("andreypfau")
+                        name.set("Andrey Pfau")
+                        email.set("andreypfau@ton.org")
+                    }
+                }
+                scm {
+                    connection.set("scm:git:git://github.com/andreypfau/curve25519-kotlin.git")
+                    developerConnection.set("scm:git:ssh://github.com/andreypfau/curve25519-kotlin.git")
+                    url.set("https://github.com/andreypfau/curve25519-kotlin")
+                }
             }
         }
     }
@@ -114,7 +134,7 @@ publishing {
 
 nexusPublishing {
     repositories {
-        create("OSSRH") {
+        sonatype {
             username.set(project.findProperty("ossrhUsername") as? String ?: System.getenv("OSSRH_USERNAME"))
             password.set(project.findProperty("ossrhPassword") as? String ?: System.getenv("OSSRH_PASSWORD"))
             nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
@@ -124,12 +144,9 @@ nexusPublishing {
 }
 
 signing {
-    isRequired = nexusPublishing.useStaging.get()
     val secretKey = project.findProperty("signing.secretKey") as? String ?: System.getenv("SIGNING_SECRET_KEY")
     val password = project.findProperty("signing.password") as? String ?: System.getenv("SIGNING_PASSWORD")
-    useInMemoryPgpKeys(
-        secretKey,
-        password,
-    )
-    sign(publishing.publications["main"])
+    isRequired = secretKey != null && password != null
+    useInMemoryPgpKeys(secretKey, password)
+    sign(publishing.publications)
 }
