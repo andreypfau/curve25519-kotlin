@@ -103,14 +103,14 @@ publishing {
             val snapshotRepo = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
             url = if (isReleaseVersion) releaseRepo else snapshotRepo
         }
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/andreypfau/curve25519-kotlin")
-            credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
-            }
-        }
+//        maven {
+//            name = "GitHubPackages"
+//            url = uri("https://maven.pkg.github.com/andreypfau/curve25519-kotlin")
+//            credentials {
+//                username = System.getenv("GITHUB_ACTOR")
+//                password = System.getenv("GITHUB_TOKEN")
+//            }
+//        }
         publications {
             create<MavenPublication>("main") {
                 from(components["kotlin"])
