@@ -3,10 +3,12 @@ plugins {
     id("org.jetbrains.kotlinx.benchmark") version "0.4.5"
     id("org.jetbrains.kotlin.plugin.allopen") version "1.7.20"
     `maven-publish`
+    signing
 }
 
-group = "com.github.andreypfau"
-version = "1.0-SNAPSHOT"
+group = "io.github.andreypfau"
+version = "0.0.1"
+val isReleaseVersion = !version.toString().endsWith("SNAPSHOT")
 
 repositories {
     mavenLocal()
@@ -92,21 +94,45 @@ benchmark {
 publishing {
     repositories {
         maven {
+            name = "OSSRH"
+            credentials {
+                username = project.findProperty("ossrhUsername") as? String ?: System.getenv("OSSRH_USERNAME")
+                password = project.findProperty("ossrhPassword") as? String ?: System.getenv("OSSRH_PASSWORD")
+            }
+            val releaseRepo = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+            val snapshotRepo = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+            url = if (isReleaseVersion) releaseRepo else snapshotRepo
+        }
+        maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/andreypfau/curve25519-kotlin")
             credentials {
-                username = System.getenv("GITHUB_ACTOR").also {
-                    println("GITHUB_ACTOR=$it")
-                }
-                password = System.getenv("GITHUB_TOKEN").also {
-                    println("GITHUB_TOKEN=$it")
-                }
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
             }
         }
         publications {
-            create<MavenPublication>("maven") {
+            create<MavenPublication>("main") {
                 from(components["kotlin"])
+                pom {
+                    name.set("curve25519-kotlin")
+                    description.set("CA pure Kotlin implementation of group operations on Curve25519.")
+                    url.set("https://github.com/andreypfau/curve25519-kotlin")
+                }
             }
         }
     }
+}
+
+signing {
+    val keyId = project.findProperty("signing.keyId") as? String ?: System.getenv("SIGNING_KEY_ID")
+    val secretKey = project.findProperty("signing.secretKey") as? String ?: System.getenv("SIGNING_SECRET_KEY")
+    val password = project.findProperty("signing.password") as? String ?: System.getenv("SIGNING_PASSWORD")
+    isRequired = isReleaseVersion && keyId != null && secretKey != null && password != null
+    useInMemoryPgpKeys(
+        keyId,
+        secretKey,
+        password,
+    )
+    sign(publishing.publications["main"])
 }
