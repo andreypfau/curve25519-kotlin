@@ -97,8 +97,12 @@ publishing {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/andreypfau/curve25519-kotlin")
             credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
+                username = System.getenv("GITHUB_ACTOR").also {
+                    println("GITHUB_ACTOR=$it")
+                }
+                password = System.getenv("GITHUB_TOKEN").also {
+                    println("GITHUB_TOKEN=$it")
+                }
             }
         }
         publications {
