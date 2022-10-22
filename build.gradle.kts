@@ -37,6 +37,7 @@ kotlin {
                 useMocha()
             }
         }
+        browser()
         compilations.all {
             kotlinOptions {
                 moduleKind = "umd"
@@ -154,16 +155,16 @@ publishing {
             }
         }
     }
-//    repositories {
-//        maven {
-//            name = "GitHubPackages"
-//            url = uri("https://maven.pkg.github.com/andreypfau/curve25519-kotlin")
-//            credentials {
-//                username = System.getenv("GITHUB_ACTOR")
-//                password = System.getenv("GITHUB_TOKEN")
-//            }
-//        }
-//    }
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/andreypfau/curve25519-kotlin")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
 }
 
 nexusPublishing {

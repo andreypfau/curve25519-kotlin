@@ -1,8 +1,7 @@
 name: Publish package to the Maven Central Repository and GitHub Packages
-#on:
-#  release:
-#    types: [ created ]
-on: [ push ]
+on:
+  release:
+    types: [ created ]
 
 jobs:
   publish:
@@ -24,4 +23,4 @@ jobs:
       - name: Run publish with Gradle Wrapper
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: publish
+          arguments: publish closeAndReleaseStagingRepository
