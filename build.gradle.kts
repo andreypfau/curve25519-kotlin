@@ -1,6 +1,4 @@
 import org.jetbrains.kotlin.konan.target.HostManager
-import org.jetbrains.kotlin.utils.addToStdlib.applyIf
-import java.io.ByteArrayOutputStream
 
 plugins {
     kotlin("multiplatform")
@@ -12,19 +10,6 @@ plugins {
 }
 
 group = "io.github.andreypfau"
-version = version.applyIf(version == "unspecified") {
-    ByteArrayOutputStream().use {
-        exec {
-            isIgnoreExitValue = true
-            commandLine("git", "describe", "--exact-match", "--abbrev=0")
-            standardOutput = it
-            errorOutput = it
-        }
-        it.toString().trim().let { v ->
-            if (v.startsWith("fatal:")) v.substring(31, 39) else v
-        }
-    }
-}
 
 println("Version: $version")
 
