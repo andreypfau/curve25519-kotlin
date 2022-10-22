@@ -1,6 +1,9 @@
-name: Build Gradle project
+name: Release project
 
-on: [ push ]
+on:
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   build:
@@ -15,23 +18,12 @@ jobs:
       OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-#      - name: Checkout project sources
-      #        uses: actions/checkout@v3
-      #      - name: Cache konan
-      #        uses: actions/cache@v3
-      #        with:
-      #          path: ~/.konan
-      #          key: ${{ runner.os }}-konan
-      - name: print version
-        run: echo ${GITHUB_REF:11} && echo ${GITHUB_REF}
-#      - name: Run build with Gradle Wrapper
-#        uses: gradle/gradle-build-action@v2
-#        with:
-#          arguments: publish -Pversion=${GITHUB_REF:11}
-#      - name: publish
-#        run: ls -Rla build/classes
-#      - name: Upload artifacts
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: ${{ matrix.os }}
-#          path: build
+      - name: Cache konan
+        uses: actions/cache@v3
+        with:
+          path: ~/.konan
+          key: ${{ runner.os }}-konan-${{ hashFiles('**/*.gradle*') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+      - name: Run build with Gradle Wrapper
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: publish -Pversion=${GITHUB_REF:11}

@@ -1,4 +1,6 @@
 import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.utils.addToStdlib.applyIf
+import java.io.ByteArrayOutputStream
 
 plugins {
     kotlin("multiplatform")
@@ -10,7 +12,15 @@ plugins {
 }
 
 group = "io.github.andreypfau"
-version = "0.0.4"
+version = version.applyIf(version == "unspecified") {
+    ByteArrayOutputStream().use {
+        exec {
+            commandLine("git", "rev-parse", "--short", "head")
+            standardOutput = it
+        }
+        it.toString().trim()
+    }
+}
 
 repositories {
     mavenLocal()
