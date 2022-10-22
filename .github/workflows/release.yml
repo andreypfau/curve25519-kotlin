@@ -1,35 +1,15 @@
 name: Publish package to the Maven Central Repository and GitHub Packages
-on:
-  release:
-    types: [ created ]
+#on:
+#  release:
+#    types: [ created ]
+on: [ push ]
+
 jobs:
-  build:
+  publish:
     strategy:
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout project sources
-        uses: actions/checkout@v3
-      - name: Cache konan
-        uses: actions/cache@v3
-        with:
-          path: ~/.konan
-          key: ${{ runner.os }}-konan
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-      - name: Run build with Gradle Wrapper
-        uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
-        with:
-          arguments: assemble
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.os }}
-          path: build
-  publish:
-    runs-on: ubuntu-latest
-    needs: build
     env:
       SIGNING_SECRET_KEY: ${{ secrets.SIGNING_SECRET_KEY }}
       SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
@@ -39,19 +19,12 @@ jobs:
     steps:
       - name: Checkout project sources
         uses: actions/checkout@v3
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-      - name: Download ubuntu artifacts
-        uses: actions/download-artifact@v3
+      - name: Cache konan
+        uses: actions/cache@v3
         with:
-          name: ubuntu-latest
-          path: build
-      - name: Download macos artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: macos-latest
-          path: build
-      - name: Run build with Gradle Wrapper
+          path: ~/.konan
+          key: ${{ runner.os }}-konan-${{ hashFiles('**/*.gradle*') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+      - name: Run publish with Gradle Wrapper
         uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
         with:
           arguments: publish

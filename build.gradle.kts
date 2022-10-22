@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "io.github.andreypfau"
-version = "0.0.2"
+version = "0.0.3"
 
 repositories {
     mavenLocal()
@@ -21,10 +21,10 @@ allOpen {
     annotation("org.openjdk.jmh.annotations.State")
 }
 
+val isCI = System.getenv("CI") == "true"
+
 kotlin {
-    val isCI = System.getenv("CI") == "true"
-    val isCIMacOS = isCI && HostManager.hostIsMac
-    if (!isCIMacOS) {
+    if (!isCI || (isCI && HostManager.hostIsLinux)) {
         jvm {
             withJava()
             compilations.all {
@@ -34,11 +34,6 @@ kotlin {
                 useJUnitPlatform()
             }
         }
-        // TODO: Fix tests fo JS
-//        js {
-//            nodejs()
-//            browser()
-//        }
     }
     val darwinTargets = if (HostManager.hostIsMac) {
         listOf(
@@ -60,14 +55,14 @@ kotlin {
 //            tvosX64().name,
         )
     } else emptyList()
-    val linuxTargets = if (!isCIMacOS) {
+    val linuxTargets = if (!isCI || (isCI && HostManager.hostIsLinux)) {
         listOf(
             linuxX64().name,
             linuxArm64().name,
             linuxArm32Hfp().name
         )
     } else emptyList()
-    val mingwTargets = if (!isCIMacOS) {
+    val mingwTargets = if (!isCI || (isCI && HostManager.hostIsMingw)) {
         listOf(
             mingwX64().name,
             mingwX86().name
@@ -129,7 +124,9 @@ val javadocJar by tasks.registering(Jar::class) {
 
 publishing {
     publications {
+        removeIf { isCI && !HostManager.hostIsLinux && it.name == "kotlinMultiplatform" }
         withType<MavenPublication> {
+            println("Configuring publication $name")
             artifact(javadocJar.get())
             pom {
                 name.set("curve25519-kotlin")
