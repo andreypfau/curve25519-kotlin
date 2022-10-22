@@ -25,11 +25,7 @@ jobs:
         with:
           path: ~/.konan
           key: ${{ runner.os }}-konan-${{ hashFiles('**/*.gradle*') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
-      - name: Getting version
-        run: |
-          echo "::set-env name=RELEASE_VERSION::${GITHUB_REF:11}"
-          echo "Version: ${RELEASE_VERSION}"
       - name: Run build with Gradle Wrapper
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: publish -Pversion=${{env.RELEASE_VERSION}}
+          arguments: publish
