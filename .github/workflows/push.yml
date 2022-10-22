@@ -21,11 +21,14 @@ jobs:
       - name: Run build with Gradle Wrapper
         uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
         with:
-          arguments: build
+          arguments: assemble
+      - name: print artifacts
+        run: ls -Rla build/classes
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          path: build/libs/*.jar
+          name: ${{ matrix.os }}
+          path: build/classes
   check:
     needs: build
     runs-on: ubuntu-latest
@@ -35,6 +38,6 @@ jobs:
       - name: Download all workflow run artifacts
         uses: actions/download-artifact@v3
         with:
-          path: build/libs/
+          path: build/classes
       - name: print all files
-        run: ls -Rla build/libs
+        run: ls -Rla build/classes
