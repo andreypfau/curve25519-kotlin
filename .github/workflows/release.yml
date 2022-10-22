@@ -1,7 +1,7 @@
 name: Publish package to the Maven Central Repository and GitHub Packages
-on: [ push ]
-#  release:
-#    types: [ created ]
+on:
+  release:
+    types: [ created ]
 jobs:
   build:
     strategy:
@@ -22,7 +22,7 @@ jobs:
         uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
         with:
           arguments: assemble
-      - name: print artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.os }}
@@ -49,10 +49,7 @@ jobs:
         with:
           name: macos-latest
           path: build
-      - name: print all files
-        run: ls -Rla build
-
-#      - name: Run build with Gradle Wrapper
-#        uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
-#        with:
-#          arguments: publish
+      - name: Run build with Gradle Wrapper
+        uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
+        with:
+          arguments: publish
