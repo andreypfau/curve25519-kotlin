@@ -21,8 +21,7 @@ allOpen {
     annotation("org.openjdk.jmh.annotations.State")
 }
 
-//val isCI = System.getenv("CI") == "true"
-val isCI = true
+val isCI = System.getenv("CI") == "true"
 
 kotlin {
     if (!isCI || (isCI && HostManager.hostIsLinux)) {
@@ -152,16 +151,16 @@ publishing {
             }
         }
     }
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/andreypfau/curve25519-kotlin")
-            credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
-            }
-        }
-    }
+//    repositories {
+//        maven {
+//            name = "GitHubPackages"
+//            url = uri("https://maven.pkg.github.com/andreypfau/curve25519-kotlin")
+//            credentials {
+//                username = System.getenv("GITHUB_ACTOR")
+//                password = System.getenv("GITHUB_TOKEN")
+//            }
+//        }
+//    }
 }
 
 tasks.withType<PublishToMavenRepository>().configureEach {
