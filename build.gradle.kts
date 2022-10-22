@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "io.github.andreypfau"
-version = "0.0.3"
+version = "0.0.2"
 
 repositories {
     mavenLocal()
