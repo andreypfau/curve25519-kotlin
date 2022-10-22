@@ -28,7 +28,7 @@ jobs:
           name: ${{ matrix.os }}
           path: build
   publish:
-    run-on: ubuntu-latest
+    runs-on: ubuntu-latest
     env:
       SIGNING_SECRET_KEY: ${{ secrets.SIGNING_SECRET_KEY }}
       SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
