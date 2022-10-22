@@ -15,7 +15,8 @@ group = "io.github.andreypfau"
 version = version.applyIf(version == "unspecified") {
     ByteArrayOutputStream().use {
         exec {
-            commandLine("git", "rev-parse", "--short", "head")
+
+        commandLine("git", "rev-parse", "--short", "head")
             standardOutput = it
         }
         it.toString().trim()
