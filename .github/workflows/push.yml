@@ -3,7 +3,7 @@ name: Build Gradle project
 on: [ push ]
 
 jobs:
-  build-gradle-project:
+  build:
     strategy:
       matrix:
         os: [ ubuntu-latest, macos-latest ]
@@ -28,6 +28,7 @@ jobs:
           name: ${{ matrix.os }}
           path: build/libs/*.jar
   check:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout project sources
