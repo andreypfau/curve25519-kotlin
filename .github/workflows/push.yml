@@ -18,6 +18,8 @@ jobs:
       OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - name: Checkout project sources
+        uses: actions/checkout@v3
       - name: Cache konan
         uses: actions/cache@v3
         with:
