@@ -6,12 +6,14 @@ import kotlin.experimental.xor
 import kotlin.jvm.JvmStatic
 
 class CompressedEdwardsY constructor(
-    val data: ByteArray
+    val data: ByteArray,
+    val offset: Int
 ) {
-    constructor() : this(ByteArray(SIZE_BYTES))
+    constructor() : this(ByteArray(SIZE_BYTES), 0)
+    constructor(data: ByteArray) : this(data.copyOf(SIZE_BYTES), 0)
 
-    fun set(byteArray: ByteArray, offset: Int = 0) {
-        byteArray.copyInto(data, 0, offset, offset + SIZE_BYTES)
+    fun set(src: ByteArray, srcOffset: Int = 0) {
+        src.copyInto(data, offset, srcOffset, srcOffset + SIZE_BYTES)
     }
 
     fun set(point: EdwardsPoint): CompressedEdwardsY = from(point, this)

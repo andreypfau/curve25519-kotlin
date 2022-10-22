@@ -9,6 +9,7 @@ import io.github.andreypfau.curve25519.internal.constantTimeEquals
 import io.github.andreypfau.curve25519.internal.sha512
 import io.github.andreypfau.curve25519.montgomery.MontgomeryPoint
 import io.github.andreypfau.curve25519.scalar.Scalar
+import kotlin.jvm.JvmStatic
 
 object X25519 {
     const val SCALAR_SIZE_BYTES = 32
@@ -18,6 +19,7 @@ object X25519 {
         it[0] = 9
     }
 
+    @JvmStatic
     fun x25519(
         scalar: ByteArray,
         point: ByteArray = BASEPOINT,
@@ -33,18 +35,20 @@ object X25519 {
         return output
     }
 
+    @JvmStatic
     fun toX25519(
         publicKey: Ed25519PublicKey,
         output: ByteArray = ByteArray(POINT_SIZE_BYTES),
         offset: Int = 0
     ): ByteArray {
-        val aCompressed = CompressedEdwardsY(publicKey.data)
+        val aCompressed = CompressedEdwardsY(publicKey.data, publicKey.offset)
         val a = EdwardsPoint.from(aCompressed)
         val montA = MontgomeryPoint.from(a)
         montA.data.copyInto(output, offset)
         return output
     }
 
+    @JvmStatic
     fun toX25519(
         privateKey: Ed25519PrivateKey,
         output: ByteArray = ByteArray(SCALAR_SIZE_BYTES),

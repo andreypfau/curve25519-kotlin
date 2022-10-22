@@ -37,7 +37,7 @@ data class Ed25519VerifyOptions(
         // Unpack A.
         val aCompressed = CompressedEdwardsY()
         try {
-            aCompressed.set(publicKey.data)
+            aCompressed.set(publicKey.data, publicKey.offset)
             a.set(aCompressed)
         } catch (e: Exception) {
             return false

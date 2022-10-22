@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.konan.target.HostManager
+
 plugins {
     kotlin("multiplatform")
     id("org.jetbrains.kotlinx.benchmark") version "0.4.5"
@@ -8,7 +10,7 @@ plugins {
 }
 
 group = "io.github.andreypfau"
-version = "0.0.3"
+version = "0.0.4"
 
 repositories {
     mavenLocal()
@@ -22,27 +24,29 @@ allOpen {
 val isCI = System.getenv("CI") == "true"
 
 kotlin {
-    jvm {
-        withJava()
-        compilations.all {
-            kotlinOptions.jvmTarget = "1.8"
-        }
-        testRuns["test"].executionTask.configure {
-            useJUnitPlatform()
-        }
-    }
-    js {
-        nodejs {
-            testTask {
-                useMocha()
+    if (!isCI || (isCI && !HostManager.hostIsMac)) {
+        jvm {
+            withJava()
+            compilations.all {
+                kotlinOptions.jvmTarget = "1.8"
+            }
+            testRuns["test"].executionTask.configure {
+                useJUnitPlatform()
             }
         }
-        browser()
-        compilations.all {
-            kotlinOptions {
-                moduleKind = "umd"
-                sourceMap = true
-                metaInfo = true
+        js {
+            nodejs {
+                testTask {
+                    useMocha()
+                }
+            }
+            browser()
+            compilations.all {
+                kotlinOptions {
+                    moduleKind = "umd"
+                    sourceMap = true
+                    metaInfo = true
+                }
             }
         }
     }
@@ -64,15 +68,19 @@ kotlin {
         tvosSimulatorArm64().name,
         tvosX64().name,
     )
-    val linuxTargets = listOf(
-        linuxX64().name,
-        linuxArm64().name,
-        linuxArm32Hfp().name
-    )
-    val mingwTargets = listOf(
-        mingwX64().name,
-        mingwX86().name
-    )
+    val linuxTargets = if (!isCI || (isCI && !HostManager.hostIsMac)) {
+        listOf(
+            linuxX64().name,
+            linuxArm64().name,
+            linuxArm32Hfp().name
+        )
+    } else emptyList()
+    val mingwTargets = if (!isCI || (isCI && !HostManager.hostIsMac)) {
+        listOf(
+            mingwX64().name,
+            mingwX86().name
+        )
+    } else emptyList()
     val nativeTargets = darwinTargets + linuxTargets + mingwTargets
 
     sourceSets {
@@ -155,14 +163,22 @@ publishing {
             }
         }
     }
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/andreypfau/curve25519-kotlin")
-            credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
-            }
+//    repositories {
+//        maven {
+//            name = "GitHubPackages"
+//            url = uri("https://maven.pkg.github.com/andreypfau/curve25519-kotlin")
+//            credentials {
+//                username = System.getenv("GITHUB_ACTOR")
+//                password = System.getenv("GITHUB_TOKEN")
+//            }
+//        }
+//    }
+}
+
+tasks.withType<PublishToMavenRepository> {
+    if (isCI && HostManager.hostIsMac) {
+        if (name.startsWith("publishKotlinMultiplatform")) {
+            enabled = false
         }
     }
 }

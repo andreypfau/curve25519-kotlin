@@ -19,11 +19,11 @@ jobs:
       - name: Run build with Gradle Wrapper
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: assemble
-      - name: print artifacts
-        run: ls -Rla build/classes
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.os }}
-          path: build
+          arguments: publish
+#      - name: publish
+#        run: ls -Rla build/classes
+#      - name: Upload artifacts
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: ${{ matrix.os }}
+#          path: build
