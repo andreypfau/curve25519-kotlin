@@ -26,7 +26,7 @@ jobs:
           path: ~/.konan
           key: ${{ runner.os }}-konan-${{ hashFiles('**/*.gradle*') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
       - name: print ref
-        run: echo ${{ env.GITHUB_REF:11 }}
+        run: echo ${{ github.ref:11 }}
 #      - name: Run build with Gradle Wrapper
 #        uses: gradle/gradle-build-action@v2
 #        with:
