@@ -8,6 +8,12 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
+    env:
+      SIGNING_SECRET_KEY: ${{ secrets.SIGNING_SECRET_KEY }}
+      SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+      OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+      OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout project sources
         uses: actions/checkout@v3
