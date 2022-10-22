@@ -22,10 +22,12 @@ jobs:
         with:
           path: ~/.konan
           key: ${{ runner.os }}-konan
-      - name: Run build with Gradle Wrapper
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: publish
+      - name: print version
+        run: ${GITHUB_REF:11}
+#      - name: Run build with Gradle Wrapper
+#        uses: gradle/gradle-build-action@v2
+#        with:
+#          arguments: publish -Pversion=${GITHUB_REF:11}
 #      - name: publish
 #        run: ls -Rla build/classes
 #      - name: Upload artifacts
