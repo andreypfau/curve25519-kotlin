@@ -21,7 +21,8 @@ allOpen {
     annotation("org.openjdk.jmh.annotations.State")
 }
 
-val isCI = System.getenv("CI") == "true"
+//val isCI = System.getenv("CI") == "true"
+val isCI = true
 
 kotlin {
     if (!isCI || (isCI && HostManager.hostIsLinux)) {
@@ -124,9 +125,7 @@ val javadocJar by tasks.registering(Jar::class) {
 
 publishing {
     publications {
-        removeIf { isCI && !HostManager.hostIsLinux && it.name == "kotlinMultiplatform" }
         withType<MavenPublication> {
-            println("Configuring publication $name")
             artifact(javadocJar.get())
             pom {
                 name.set("curve25519-kotlin")
@@ -162,6 +161,12 @@ publishing {
                 password = System.getenv("GITHUB_TOKEN")
             }
         }
+    }
+}
+
+tasks.withType<PublishToMavenRepository>().configureEach {
+    if (name.startsWith("publishKotlinMultiplatformPublication")) {
+        enabled = !isCI || (isCI && HostManager.hostIsLinux)
     }
 }
 
