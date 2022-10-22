@@ -19,6 +19,6 @@ dependencies {
 <dependency>
     <groupId>io.github.andreypfau</groupId>
     <artifactId>curve25519-kotlin-jvm</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.3</version>
 </dependency>
 ```

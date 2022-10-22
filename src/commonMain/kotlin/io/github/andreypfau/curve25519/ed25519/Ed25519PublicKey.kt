@@ -6,25 +6,18 @@ import io.github.andreypfau.curve25519.internal.sha512
 import io.github.andreypfau.curve25519.internal.varTimeDoubleScalarBaseMul
 import io.github.andreypfau.curve25519.scalar.Scalar
 
-class Ed25519PublicKey constructor(
-    val data: ByteArray,
-    val offset: Int
+class Ed25519PublicKey internal constructor(
+    internal val data: ByteArray
 ) {
-    constructor(rawData: ByteArray) : this(rawData.copyOf(SIZE_BYTES), 0)
-
-    init {
-        require(data.size - offset >= SIZE_BYTES) { "ed25519: bad length: ${data.size}" }
-    }
-
     fun verify(
         message: ByteArray,
         signature: ByteArray
     ): Boolean {
-        val aCompressed = CompressedEdwardsY(data, offset)
+        val aCompressed = CompressedEdwardsY(data)
         val a = EdwardsPoint.from(aCompressed)
 
         // hram = H(R,A,m)
-        val hash = sha512(signature.copyOfRange(0, 32) + data.copyOfRange(offset, offset + SIZE_BYTES) + message)
+        val hash = sha512(signature.copyOfRange(0, 32) + data + message)
         val k = Scalar.fromWideByteArray(hash)
         val s = Scalar.fromByteArray(signature, 32)
 
