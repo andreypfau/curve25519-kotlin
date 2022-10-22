@@ -15,15 +15,15 @@ jobs:
       OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Checkout project sources
-        uses: actions/checkout@v3
-      - name: Cache konan
-        uses: actions/cache@v3
-        with:
-          path: ~/.konan
-          key: ${{ runner.os }}-konan
+#      - name: Checkout project sources
+      #        uses: actions/checkout@v3
+      #      - name: Cache konan
+      #        uses: actions/cache@v3
+      #        with:
+      #          path: ~/.konan
+      #          key: ${{ runner.os }}-konan
       - name: print version
-        run: echo ${GITHUB_REF:11}
+        run: echo ${GITHUB_REF:11} && echo ${GITHUB_REF}
 #      - name: Run build with Gradle Wrapper
 #        uses: gradle/gradle-build-action@v2
 #        with:
