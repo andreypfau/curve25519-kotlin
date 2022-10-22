@@ -45,20 +45,20 @@ kotlin {
             macosArm64().name,
             macosX64().name,
 
-            iosArm32().name,
-            iosArm64().name,
-            iosSimulatorArm64().name,
-            iosX64().name,
-
-            watchosArm32().name,
-            watchosArm64().name,
-            watchosSimulatorArm64().name,
-            watchosX86().name,
-            watchosX64().name,
-
-            tvosArm64().name,
-            tvosSimulatorArm64().name,
-            tvosX64().name,
+//            iosArm32().name,
+//            iosArm64().name,
+//            iosSimulatorArm64().name,
+//            iosX64().name,
+//
+//            watchosArm32().name,
+//            watchosArm64().name,
+//            watchosSimulatorArm64().name,
+//            watchosX86().name,
+//            watchosX64().name,
+//
+//            tvosArm64().name,
+//            tvosSimulatorArm64().name,
+//            tvosX64().name,
         )
     } else emptyList()
     val linuxTargets = if (!isCIMacOS) {
