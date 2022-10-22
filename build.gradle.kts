@@ -44,7 +44,6 @@ kotlin {
         listOf(
             macosArm64().name,
             macosX64().name,
-
 //            iosArm32().name,
 //            iosArm64().name,
 //            iosSimulatorArm64().name,
