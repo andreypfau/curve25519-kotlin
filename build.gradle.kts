@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.konan.target.HostManager
-
 plugins {
     kotlin("multiplatform")
     id("org.jetbrains.kotlinx.benchmark") version "0.4.5"
@@ -10,7 +8,7 @@ plugins {
 }
 
 group = "io.github.andreypfau"
-version = "0.0.2"
+version = "0.0.3"
 
 repositories {
     mavenLocal()
@@ -24,52 +22,57 @@ allOpen {
 val isCI = System.getenv("CI") == "true"
 
 kotlin {
-    if (!isCI || (isCI && HostManager.hostIsLinux)) {
-        jvm {
-            withJava()
-            compilations.all {
-                kotlinOptions.jvmTarget = "1.8"
+    jvm {
+        withJava()
+        compilations.all {
+            kotlinOptions.jvmTarget = "1.8"
+        }
+        testRuns["test"].executionTask.configure {
+            useJUnitPlatform()
+        }
+    }
+    js {
+        nodejs {
+            testTask {
+                useMocha()
             }
-            testRuns["test"].executionTask.configure {
-                useJUnitPlatform()
+        }
+        compilations.all {
+            kotlinOptions {
+                moduleKind = "umd"
+                sourceMap = true
+                metaInfo = true
             }
         }
     }
-    val darwinTargets = if (HostManager.hostIsMac) {
-        listOf(
-            macosArm64().name,
-            macosX64().name,
-//            iosArm32().name,
-//            iosArm64().name,
-//            iosSimulatorArm64().name,
-//            iosX64().name,
-//
-//            watchosArm32().name,
-//            watchosArm64().name,
-//            watchosSimulatorArm64().name,
-//            watchosX86().name,
-//            watchosX64().name,
-//
-//            tvosArm64().name,
-//            tvosSimulatorArm64().name,
-//            tvosX64().name,
-        )
-    } else emptyList()
-    val linuxTargets = if (!isCI || (isCI && HostManager.hostIsLinux)) {
-        listOf(
-            linuxX64().name,
-            linuxArm64().name,
-            linuxArm32Hfp().name
-        )
-    } else emptyList()
-    val mingwTargets = if (!isCI || (isCI && HostManager.hostIsMingw)) {
-        listOf(
-            mingwX64().name,
-            mingwX86().name
-        )
-    } else emptyList()
+    val darwinTargets = listOf(
+        macosArm64().name,
+        macosX64().name,
+        iosArm32().name,
+        iosArm64().name,
+        iosSimulatorArm64().name,
+        iosX64().name,
+
+        watchosArm32().name,
+        watchosArm64().name,
+        watchosSimulatorArm64().name,
+        watchosX86().name,
+        watchosX64().name,
+
+        tvosArm64().name,
+        tvosSimulatorArm64().name,
+        tvosX64().name,
+    )
+    val linuxTargets = listOf(
+        linuxX64().name,
+        linuxArm64().name,
+        linuxArm32Hfp().name
+    )
+    val mingwTargets = listOf(
+        mingwX64().name,
+        mingwX86().name
+    )
     val nativeTargets = darwinTargets + linuxTargets + mingwTargets
-    println("Native targets: \n${nativeTargets.joinToString("\n* ", prefix = "* ")}")
 
     sourceSets {
         val nativeMain by creating {
@@ -161,12 +164,6 @@ publishing {
 //            }
 //        }
 //    }
-}
-
-tasks.withType<PublishToMavenRepository>().configureEach {
-    if (name.startsWith("publishKotlinMultiplatformPublication")) {
-        enabled = !isCI || (isCI && HostManager.hostIsLinux)
-    }
 }
 
 nexusPublishing {

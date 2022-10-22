@@ -6,10 +6,7 @@ on: [ push ]
 
 jobs:
   publish:
-    strategy:
-      matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-latest
     env:
       SIGNING_SECRET_KEY: ${{ secrets.SIGNING_SECRET_KEY }}
       SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
@@ -27,4 +24,4 @@ jobs:
       - name: Run publish with Gradle Wrapper
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: publish closeAndReleaseStagingRepository
+          arguments: publish
