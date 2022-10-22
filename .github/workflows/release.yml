@@ -1,7 +1,7 @@
 name: Publish package to the Maven Central Repository and GitHub Packages
-on:
-  release:
-    types: [ created ]
+on: [ push ]
+#  release:
+#    types: [ created ]
 jobs:
   build:
     strategy:
@@ -21,10 +21,37 @@ jobs:
       - name: Run build with Gradle Wrapper
         uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
         with:
-          arguments: publish
-        env:
-          SIGNING_SECRET_KEY: ${{ secrets.SIGNING_SECRET_KEY }}
-          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          arguments: assemble
+      - name: print artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.os }}
+          path: build
+  publish:
+    run-on: ubuntu-latest
+    env:
+      SIGNING_SECRET_KEY: ${{ secrets.SIGNING_SECRET_KEY }}
+      SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+      OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+      OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+      - name: Download ubuntu artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ubuntu-latest
+          path: build
+      - name: Download macos artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: macos-latest
+          path: build
+      - name: print all files
+        run: ls -Rla build
+
+#      - name: Run build with Gradle Wrapper
+#        uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
+#        with:
+#          arguments: publish
