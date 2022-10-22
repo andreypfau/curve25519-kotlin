@@ -21,28 +21,7 @@ jobs:
       - name: Run build with Gradle Wrapper
         uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
         with:
-          arguments: build
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.os }}
-          path: build/libs/*.jar
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout project sources
-        uses: actions/checkout@v3
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-        with:
-          path: build/libs
-      - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
-      - name: Publish package
-        uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
-        with:
-          arguments: publish closeAndReleaseStagingRepository
+          arguments: publish
         env:
           SIGNING_SECRET_KEY: ${{ secrets.SIGNING_SECRET_KEY }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
