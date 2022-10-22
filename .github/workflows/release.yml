@@ -30,7 +30,7 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
-    stages:
+    steps:
       - name: Checkout project sources
         uses: actions/checkout@v3
       - name: Download artifacts
