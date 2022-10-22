@@ -10,20 +10,20 @@ class Ed25519PrivateKey internal constructor(
     internal val data: ByteArray
 ) {
     fun toByteArray(): ByteArray = toByteArray(ByteArray(Ed25519.PRIVATE_KEY_SIZE_BYTES))
-    fun toByteArray(output: ByteArray, offset: Int = 0): ByteArray =
-        data.copyInto(output, offset)
+    fun toByteArray(destination: ByteArray, destinationOffset: Int = 0): ByteArray =
+        data.copyInto(destination, destinationOffset)
 
     fun seed(): ByteArray = seed(ByteArray(Ed25519.SEED_SIZE_BYTES))
-    fun seed(output: ByteArray, offset: Int = 0): ByteArray {
-        data.copyInto(output, offset, 0, Ed25519.SEED_SIZE_BYTES)
-        return output
+    fun seed(destination: ByteArray, destinationOffset: Int = 0): ByteArray {
+        data.copyInto(destination, destinationOffset, 0, Ed25519.SEED_SIZE_BYTES)
+        return destination
     }
 
     fun publicKey(): Ed25519PublicKey =
         Ed25519PublicKey(data.copyOfRange(32, 64))
 
     fun sign(message: ByteArray): ByteArray = sign(message, ByteArray(Ed25519.SIGNATURE_SIZE_BYTES))
-    fun sign(message: ByteArray, output: ByteArray, offset: Int = 0): ByteArray {
+    fun sign(message: ByteArray, destination: ByteArray, destinationOffset: Int = 0): ByteArray {
         val extsk = sha512(data, 0, 32)
         extsk[0] = (extsk[0].toInt() and 248).toByte()
         extsk[31] = (extsk[31].toInt() and 127).toByte()
@@ -48,10 +48,10 @@ class Ed25519PrivateKey internal constructor(
         s.add(s, r)
 
         // S = (r + H(R,A,m)a) mod L
-        rCompressed.data.copyInto(output, offset)
-        s.toByteArray(output, offset + 32)
+        rCompressed.data.copyInto(destination, destinationOffset)
+        s.toByteArray(destination, destinationOffset + 32)
 
-        return output
+        return destination
     }
 
     fun sharedKey(
