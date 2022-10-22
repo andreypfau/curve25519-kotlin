@@ -23,7 +23,7 @@ jobs:
           path: ~/.konan
           key: ${{ runner.os }}-konan
       - name: print version
-        run: ${GITHUB_REF:11}
+        run: echo ${GITHUB_REF:11}
 #      - name: Run build with Gradle Wrapper
 #        uses: gradle/gradle-build-action@v2
 #        with:
