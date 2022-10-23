@@ -16,7 +16,6 @@ dependencies {
 ### Apache Maven:
 
 ```xml
-
 <dependency>
     <groupId>io.github.andreypfau</groupId>
     <artifactId>curve25519-kotlin-jvm</artifactId>
