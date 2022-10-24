@@ -1,6 +1,6 @@
 # curve25519-kotlin
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.andreypfau/curve25519-kotlin.svg)](https://search.maven.org/artifact/io.github.andreypfau/curve25519-kotlin/0.0.4/pom)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.andreypfau/curve25519-kotlin.svg)](https://search.maven.org/artifact/io.github.andreypfau/curve25519-kotlin/0.0.5/pom)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Kotlin](https://img.shields.io/badge/kotlin-1.7.20-blue.svg?logo=kotlin)](http://kotlinlang.org)
 
