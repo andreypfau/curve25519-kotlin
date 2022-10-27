@@ -48,7 +48,7 @@ kotlin {
                 useJUnitPlatform()
             }
         }
-        js {
+        js(BOTH) {
             nodejs {
                 testTask {
                     useMocha()
