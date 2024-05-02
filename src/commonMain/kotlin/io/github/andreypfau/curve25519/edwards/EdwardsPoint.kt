@@ -132,7 +132,7 @@ data class EdwardsPoint(
             require(isValidYCoord == 1) {
                 "Invalid Y coordinate"
             }
-            val compressedSignBit = (compressedY.data[31].toInt() shr 7)
+            val compressedSignBit = ((compressedY.data[31].toInt() and 0xFF) ushr 7)
             x.conditionalNegate(compressedSignBit)
 
             output.x.set(x)
