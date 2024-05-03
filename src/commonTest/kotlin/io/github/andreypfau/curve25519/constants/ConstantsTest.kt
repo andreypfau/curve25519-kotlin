@@ -7,6 +7,7 @@ import kotlin.test.assertEquals
 class ConstantsTest {
     @Test
     fun testConstantsDVsRatio() {
+        // Test that d = -121665/121666.
         val a = FieldElement(121665u, 0u, 0u, 0u, 0u)
         a.negate(a)
 

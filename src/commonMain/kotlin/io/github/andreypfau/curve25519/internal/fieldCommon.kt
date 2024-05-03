@@ -56,7 +56,7 @@ internal fun feMulCommon(v: ULongArray, a: ULongArray, b: ULongArray) {
     val a3_19 = a3 * 19u
     val a4_19 = a4 * 19u
 
-// r0 = a0×b0 + 19×(a1×b4 + a2×b3 + a3×b2 + a4×b1)
+    // r0 = a0×b0 + 19×(a1×b4 + a2×b3 + a3×b2 + a4×b1)
     var r0 = mul64(a0, b0)
     r0 = mulAdd64(r0, a1_19, b4)
     r0 = mulAdd64(r0, a2_19, b3)
@@ -118,11 +118,11 @@ internal fun feMulCommon(v: ULongArray, a: ULongArray, b: ULongArray) {
     //     r4 < 2¹⁰⁷
     //
 
-    val c0 = shiftRightBy51(r0)
-    val c1 = shiftRightBy51(r1)
-    val c2 = shiftRightBy51(r2)
-    val c3 = shiftRightBy51(r3)
-    val c4 = shiftRightBy51(r4)
+    var c0 = shiftRightBy51(r0)
+    var c1 = shiftRightBy51(r1)
+    var c2 = shiftRightBy51(r2)
+    var c3 = shiftRightBy51(r3)
+    var c4 = shiftRightBy51(r4)
 
     v[0] = (r0.lo and LOW_51_BIT_NASK) + c4 * 19uL
     v[1] = (r1.lo and LOW_51_BIT_NASK) + c0
@@ -133,17 +133,18 @@ internal fun feMulCommon(v: ULongArray, a: ULongArray, b: ULongArray) {
     // Now all coefficients fit into 64-bit registers but are still too large to
     // be passed around as a Element. We therefore do one last carry chain,
     // where the carries will be small enough to fit in the wiggle room above 2⁵¹.
-    val c01 = v[0] shr 51
-    val c11 = v[1] shr 51
-    val c21 = v[2] shr 51
-    val c31 = v[3] shr 51
-    val c41 = v[4] shr 51
+    c0 = v[0] shr 51
+    c1 = v[1] shr 51
+    c2 = v[2] shr 51
+    c3 = v[3] shr 51
+    c4 = v[4] shr 51
+
     // c4 is at most 64 - 51 = 13 bits, so c4*19 is at most 18 bits, and
     // the final l0 will be at most 52 bits. Similarly, for the rest.
-    v[0] = (v[0] and LOW_51_BIT_NASK) + c41 * 19u
-    v[1] = (v[1] and LOW_51_BIT_NASK) + c01
-    v[2] = (v[2] and LOW_51_BIT_NASK) + c11
-    v[3] = (v[3] and LOW_51_BIT_NASK) + c21
+    v[0] = (v[0] and LOW_51_BIT_NASK) + c4 * 19u
+    v[1] = (v[1] and LOW_51_BIT_NASK) + c0
+    v[2] = (v[2] and LOW_51_BIT_NASK) + c1
+    v[3] = (v[3] and LOW_51_BIT_NASK) + c2
     v[4] = (v[4] and LOW_51_BIT_NASK) + c3
 }
 
