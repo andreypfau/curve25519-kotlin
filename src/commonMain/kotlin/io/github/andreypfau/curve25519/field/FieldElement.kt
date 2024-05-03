@@ -5,6 +5,7 @@ package io.github.andreypfau.curve25519.field
 import io.github.andreypfau.curve25519.constants.SQRT_M1
 import io.github.andreypfau.curve25519.edwards.CompressedEdwardsY
 import io.github.andreypfau.curve25519.internal.*
+import io.github.andreypfau.kotlinx.crypto.subtle.*
 import kotlin.jvm.JvmStatic
 
 private val LOW_51_BIT_MASK = (1uL shl 51) - 1uL
@@ -58,7 +59,7 @@ data class FieldElement(
         conditionalSwapElement(other, 4, choise)
     }
 
-    private inline fun conditionalSwapElement(other: FieldElement, index: Int, choise: Int) {
+    private fun conditionalSwapElement(other: FieldElement, index: Int, choise: Int) {
         choise.constantTimeSwap(other.inner[index].toLong(), inner[index].toLong()) { a, b ->
             other.inner[index] = a.toULong()
             inner[index] = b.toULong()
@@ -473,7 +474,7 @@ data class FieldElement(
             return output
         }
 
-        private inline fun add64(uint128: ULongArray, a: ULong, output: ULongArray = ULongArray(2)): ULongArray {
+        private fun add64(uint128: ULongArray, a: ULong, output: ULongArray = ULongArray(2)): ULongArray {
             val (lo, carry) = add64(uint128[1], a, 0u)
             val (hi, _) = add64(uint128[0], 0u, carry)
             output[0] = hi

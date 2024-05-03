@@ -19,13 +19,13 @@ internal fun mul64(x: ULong, y: ULong, output: ULongArray = ULongArray(2)): ULon
     return output
 }
 
-internal inline fun add64(x: ULong, y: ULong, carry: ULong, output: ULongArray = ULongArray(2)): ULongArray {
+internal fun add64(x: ULong, y: ULong, carry: ULong, output: ULongArray = ULongArray(2)): ULongArray {
     output[0] = x + y + carry
     output[1] = ((x and y) or ((x or y) and output[0].inv())) shr 63
     return output
 }
 
-internal inline fun add128(x: ULongArray, y: ULongArray, output: ULongArray = ULongArray(2)): ULongArray {
+internal fun add128(x: ULongArray, y: ULongArray, output: ULongArray = ULongArray(2)): ULongArray {
     val (hi, carry) = add64(x[1], y[1], 0u, output)
     val (lo, _) = add64(x[0], y[0], carry, output)
     output[0] = lo

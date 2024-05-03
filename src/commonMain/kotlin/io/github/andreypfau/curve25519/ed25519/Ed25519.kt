@@ -3,7 +3,7 @@ package io.github.andreypfau.curve25519.ed25519
 import io.github.andreypfau.curve25519.constants.tables.ED25519_BASEPOINT_TABLE
 import io.github.andreypfau.curve25519.edwards.CompressedEdwardsY
 import io.github.andreypfau.curve25519.edwards.EdwardsPoint
-import io.github.andreypfau.curve25519.internal.sha512
+import io.github.andreypfau.kotlinx.crypto.sha512
 import io.github.andreypfau.curve25519.scalar.Scalar
 import io.github.andreypfau.curve25519.x25519.X25519
 import kotlin.jvm.JvmStatic

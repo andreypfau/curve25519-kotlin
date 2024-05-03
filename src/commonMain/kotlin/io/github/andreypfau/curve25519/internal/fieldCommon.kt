@@ -7,7 +7,7 @@ import io.github.andreypfau.curve25519.constants.LOW_51_BIT_NASK
 private inline val ULongArray.lo get() = get(0)
 private inline val ULongArray.hi get() = get(1)
 
-private inline fun mul64(a: ULong, b: ULong): ULongArray {
+private fun mul64(a: ULong, b: ULong): ULongArray {
     val uInt128 = ULongArray(2)
     val (hi, lo) = mul64(a, b, uInt128)
     uInt128[0] = lo
@@ -15,7 +15,7 @@ private inline fun mul64(a: ULong, b: ULong): ULongArray {
     return uInt128
 }
 
-private inline fun mulAdd64(uInt128: ULongArray, a: ULong, b: ULong) = uInt128.apply {
+private fun mulAdd64(uInt128: ULongArray, a: ULong, b: ULong) = uInt128.apply {
     val hi_0 = this.hi
     val lo_0 = this.lo
     val (hi_1, lo_1) = mul64(a, b, this)
@@ -25,7 +25,7 @@ private inline fun mulAdd64(uInt128: ULongArray, a: ULong, b: ULong) = uInt128.a
     this[1] = hi_2
 }
 
-private inline fun shift51(a: ULongArray, b: ULongArray): ULongArray = b.apply {
+private fun shift51(a: ULongArray, b: ULongArray): ULongArray = b.apply {
     val tmp = shiftRightBy51(a)
     val buf = ULongArray(2)
     val (lo, carry) = add64(b.lo, tmp, 0u, buf)
@@ -34,11 +34,11 @@ private inline fun shift51(a: ULongArray, b: ULongArray): ULongArray = b.apply {
     b[1] = hi
 }
 
-internal inline fun shiftRightBy51(uInt128: ULongArray): ULong {
+internal fun shiftRightBy51(uInt128: ULongArray): ULong {
     return (uInt128.hi shl (64 - 51)) or (uInt128.lo shr 51)
 }
 
-internal inline fun feMulCommon(v: ULongArray, a: ULongArray, b: ULongArray) {
+internal fun feMulCommon(v: ULongArray, a: ULongArray, b: ULongArray) {
     val a0 = a[0]
     val a1 = a[1]
     val a2 = a[2]
@@ -133,64 +133,18 @@ internal inline fun feMulCommon(v: ULongArray, a: ULongArray, b: ULongArray) {
     // Now all coefficients fit into 64-bit registers but are still too large to
     // be passed around as a Element. We therefore do one last carry chain,
     // where the carries will be small enough to fit in the wiggle room above 2⁵¹.
-    carryPropagateCommon(v)
-}
-
-internal inline fun feSquareCommon(v: ULongArray, a: ULongArray) {
-    val l0 = a[0]
-    val l1 = a[1]
-    val l2 = a[2]
-    val l3 = a[3]
-    val l4 = a[4]
-
-    val l0_2 = l0 * 2u
-    val l1_2 = l1 * 2u
-
-    val l1_38 = l1 * 38u
-    val l2_38 = l2 * 38u
-    val l3_38 = l3 * 38u
-
-    val l3_19 = l3 * 19u
-    val l4_19 = l4 * 19u
-
-    // r0 = l0×l0 + 19×(l1×l4 + l2×l3 + l3×l2 + l4×l1) = l0×l0 + 19×2×(l1×l4 + l2×l3)
-    var r0 = mul64(l0, l0)
-    r0 = mulAdd64(r0, l1_38, l4)
-    r0 = mulAdd64(r0, l2_38, l3)
-
-    // r1 = l0×l1 + l1×l0 + 19×(l2×l4 + l3×l3 + l4×l2) = 2×l0×l1 + 19×2×l2×l4 + 19×l3×l3
-    var r1 = mul64(l0_2, l1)
-    r1 = mulAdd64(r1, l2_38, l4)
-    r1 = mulAdd64(r1, l3_19, l3)
-
-    // r2 = l0×l2 + l1×l1 + l2×l0 + 19×(l3×l4 + l4×l3) = 2×l0×l2 + l1×l1 + 19×2×l3×l4
-    var r2 = mul64(l0_2, l2)
-    r2 = mulAdd64(r2, l1, l1)
-    r2 = mulAdd64(r2, l3_38, l4)
-
-    // r3 = l0×l3 + l1×l2 + l2×l1 + l3×l0 + 19×l4×l4 = 2×l0×l3 + 2×l1×l2 + 19×l4×l4
-    var r3 = mul64(l0_2, l3)
-    r3 = mulAdd64(r3, l1_2, l2)
-    r3 = mulAdd64(r3, l4_19, l4)
-
-    // r4 = l0×l4 + l1×l3 + l2×l2 + l3×l1 + l4×l0 = 2×l0×l4 + 2×l1×l3 + l2×l2
-    var r4 = mul64(l0_2, l4)
-    r4 = mulAdd64(r4, l1_2, l3)
-    r4 = mulAdd64(r4, l2, l2)
-
-    val c0 = shiftRightBy51(r0)
-    val c1 = shiftRightBy51(r1)
-    val c2 = shiftRightBy51(r2)
-    val c3 = shiftRightBy51(r3)
-    val c4 = shiftRightBy51(r4)
-
-    v[0] = r0.lo and LOW_51_BIT_NASK + c4 * 19u
-    v[1] = r1.lo and LOW_51_BIT_NASK + c0
-    v[2] = r2.lo and LOW_51_BIT_NASK + c1
-    v[3] = r3.lo and LOW_51_BIT_NASK + c2
-    v[4] = r4.lo and LOW_51_BIT_NASK + c3
-
-    carryPropagateCommon(v)
+    val c01 = v[0] shr 51
+    val c11 = v[1] shr 51
+    val c21 = v[2] shr 51
+    val c31 = v[3] shr 51
+    val c41 = v[4] shr 51
+    // c4 is at most 64 - 51 = 13 bits, so c4*19 is at most 18 bits, and
+    // the final l0 will be at most 52 bits. Similarly, for the rest.
+    v[0] = (v[0] and LOW_51_BIT_NASK) + c41 * 19u
+    v[1] = (v[1] and LOW_51_BIT_NASK) + c01
+    v[2] = (v[2] and LOW_51_BIT_NASK) + c11
+    v[3] = (v[3] and LOW_51_BIT_NASK) + c21
+    v[4] = (v[4] and LOW_51_BIT_NASK) + c3
 }
 
 internal fun fePow2k(fe: ULongArray, t: ULongArray, k: Int) {
@@ -255,92 +209,3 @@ internal fun fePow2k(fe: ULongArray, t: ULongArray, k: Int) {
     fe[3] = a3
     fe[4] = a4
 }
-
-internal inline fun carryPropagateCommon(v: ULongArray) {
-    val c0 = v[0] shr 51
-    val c1 = v[1] shr 51
-    val c2 = v[2] shr 51
-    val c3 = v[3] shr 51
-    val c4 = v[4] shr 51
-
-    // c4 is at most 64 - 51 = 13 bits, so c4*19 is at most 18 bits, and
-    // the final l0 will be at most 52 bits. Similarly, for the rest.
-    v[0] = (v[0] and LOW_51_BIT_NASK) + c4 * 19u
-    v[1] = (v[1] and LOW_51_BIT_NASK) + c0
-    v[2] = (v[2] and LOW_51_BIT_NASK) + c1
-    v[3] = (v[3] and LOW_51_BIT_NASK) + c2
-    v[4] = (v[4] and LOW_51_BIT_NASK) + c3
-}
-
-//internal fun fePow2k(fe: ULongArray, t: ULongArray, k: Int) {
-//    var a0 = t[0]
-//    var a1 = t[1]
-//    var a2 = t[2]
-//    var a3 = t[3]
-//    var a4 = t[4]
-//    val buf = ULongArray(2)
-//
-//    repeat(k) {
-//        val a3_19 = a3 * 19u
-//        val a4_19 = a3 * 19u
-//
-//        val d0 = a0 * 2u
-//        val d1 = a1 * 2u
-//        val d2 = a2 * 2u
-//        val d4 = a4 * 2u
-//
-//        val (c0_hi, c0_lo) = mulAdd(a0, a0, d1, a4_19, d2, a3_19, buf)
-//        val (c1_hi, c1_lo) = mulAdd(a3, a3_19, d0, a1, d2, a3_19, buf)
-//        val (c2_hi, c2_lo) = mulAdd(a1, a1, d0, a2, d4, a3_19, buf)
-//        val (c3_hi, c3_lo) = mulAdd(a4, a4_19, d1, a2, d4, a3_19, buf)
-//        val (c4_hi, c4_lo) = mulAdd(a2, a2, d0, a4, d1, a3, buf)
-//
-//        val (c1_hi_1, c1_lo_1) = shiftAdd(c0_hi, c0_lo, c1_lo, c1_hi, buf)
-//        val (c2_hi_1, c2_lo_1) = shiftAdd(c1_hi_1, c1_lo_1, c2_lo, c2_hi, buf)
-//        val (c3_hi_1, c3_lo_1) =  shiftAdd(c2_hi_1, c2_lo_1, c3_lo, c3_hi, buf)
-//        val (c4_hi_1, c4_lo_1) =  shiftAdd(c3_hi_1, c3_lo_1, c4_lo, c4_hi, buf)
-//
-//        val carry = shift51(c4_hi_1, c4_lo_1)
-//
-//        a0 = and51(c0_lo)
-//        a1 = and51(c1_lo_1)
-//        a2 = and51(c2_lo_1)
-//        a3 = and51(c3_lo_1)
-//        a4 = and51(c4_lo_1)
-//
-//        a0 += carry * 19u
-//        a1 += a0 shr 51
-//        a0 = a0 and maskLow51Bits
-//    }
-//
-//    fe[0] = a0
-//    fe[1] = a1
-//    fe[2] = a2
-//    fe[3] = a3
-//    fe[4] = a4
-//}
-
-//fun mulAdd(a: ULong, b: ULong, c: ULong, d: ULong, e: ULong, f: ULong, buf: ULongArray): ULongArray {
-//    val (c0_hi, c0_lo) = mul64(a, b, buf)
-//    val (t0_hi, t0_lo) = mul64(c, d, buf)
-//    val (c1_lo, carry_0) = add64(c0_lo, t0_lo, 0u, buf)
-//    val (c1_hi, _) = add64(c0_hi, t0_hi, carry_0, buf)
-//    val (t1_hi, t1_lo) = mul64(e, f, buf)
-//    val (c2_lo, carry_1) = add64(c1_lo, t1_lo, 0u, buf)
-//    val (c2_hi, _) = add64(c1_hi, t1_hi, carry_1, buf)
-//    buf[0] = c2_hi
-//    buf[1] = c2_lo
-//    return buf
-//}
-//
-//fun shiftAdd(hi_0: ULong, lo_0: ULong, hi_1: ULong, lo_1: ULong, buf: ULongArray): ULongArray {
-//    val tmp = shift51(hi_0, lo_0)
-//    val (lo, carry) = add64(lo_1, tmp, 0u, buf)
-//    val (hi, _) = add64(hi_1, 0u, carry, buf)
-//    buf[0] = hi
-//    buf[1] = lo
-//    return buf
-//}
-//
-//fun shift51(hi: ULong, lo: ULong) = (hi shl (64 - 51)) or (lo shr 51)
-//fun and51(lo: ULong) = lo and maskLow51Bits

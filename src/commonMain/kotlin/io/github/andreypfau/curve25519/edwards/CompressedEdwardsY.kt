@@ -24,7 +24,7 @@ class CompressedEdwardsY constructor(
         return true
     }
 
-    private inline fun yCanonnical(): Boolean {
+    private fun yCanonnical(): Boolean {
         if (data[0].toUInt() < 237u) return true
         for (i in 1 until 31) {
             if (data[i].toUInt() != 255u) return true

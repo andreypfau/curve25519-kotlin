@@ -29,7 +29,7 @@ internal fun hex(
     }
 }
 
-private inline fun hex(ch: Char): Int = when (ch) {
+private fun hex(ch: Char): Int = when (ch) {
     in '0'..'9' -> ch - '0'
     in 'A'..'F' -> ch - 'A' + 10
     in 'a'..'f' -> ch - 'a' + 10

@@ -1,9 +1,9 @@
 package io.github.andreypfau.curve25519.constants.tables
 
 import io.github.andreypfau.curve25519.edwards.EdwardsPoint
-import io.github.andreypfau.curve25519.internal.constantTimeEquals
 import io.github.andreypfau.curve25519.models.CompletedPoint
 import io.github.andreypfau.curve25519.models.ProjectiveNielsPoint
+import io.github.andreypfau.kotlinx.crypto.subtle.constantTimeEquals
 
 class ProjectiveNielsPointLookupTable(
     val data: Array<ProjectiveNielsPoint>

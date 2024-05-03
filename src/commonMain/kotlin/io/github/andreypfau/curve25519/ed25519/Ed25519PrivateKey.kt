@@ -3,8 +3,9 @@ package io.github.andreypfau.curve25519.ed25519
 import io.github.andreypfau.curve25519.constants.tables.ED25519_BASEPOINT_TABLE
 import io.github.andreypfau.curve25519.edwards.CompressedEdwardsY
 import io.github.andreypfau.curve25519.edwards.EdwardsPoint
-import io.github.andreypfau.curve25519.internal.sha512
 import io.github.andreypfau.curve25519.scalar.Scalar
+import io.github.andreypfau.kotlinx.crypto.Sha512
+import io.github.andreypfau.kotlinx.crypto.sha512
 
 class Ed25519PrivateKey internal constructor(
     internal val data: ByteArray
@@ -24,7 +25,7 @@ class Ed25519PrivateKey internal constructor(
 
     fun sign(message: ByteArray): ByteArray = sign(message, ByteArray(Ed25519.SIGNATURE_SIZE_BYTES))
     fun sign(message: ByteArray, destination: ByteArray, destinationOffset: Int = 0): ByteArray {
-        val extsk = sha512(data, 0, 32)
+        val extsk = Sha512().update(data, 0, 32).digest()
         extsk[0] = (extsk[0].toInt() and 248).toByte()
         extsk[31] = (extsk[31].toInt() and 127).toByte()
         extsk[31] = (extsk[31].toInt() or 64).toByte()

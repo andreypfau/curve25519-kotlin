@@ -1,0 +1,10 @@
+[versions]
+kotlin = "2.0.0-RC2"
+kotlinx-crypto = "0.0.4"
+
+[libraries]
+kotlinx-crypto-sha2 = { module = "io.github.andreypfau:kotlinx-crypto-sha2", version.ref = "kotlinx-crypto" }
+kotlinx-crypto-subtle = { module = "io.github.andreypfau:kotlinx-crypto-subtle", version.ref = "kotlinx-crypto" }
+
+[plugins]
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

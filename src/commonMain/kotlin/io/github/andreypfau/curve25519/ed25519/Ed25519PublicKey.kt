@@ -2,7 +2,7 @@ package io.github.andreypfau.curve25519.ed25519
 
 import io.github.andreypfau.curve25519.edwards.CompressedEdwardsY
 import io.github.andreypfau.curve25519.edwards.EdwardsPoint
-import io.github.andreypfau.curve25519.internal.sha512
+import io.github.andreypfau.kotlinx.crypto.sha512
 import io.github.andreypfau.curve25519.internal.varTimeDoubleScalarBaseMul
 import io.github.andreypfau.curve25519.scalar.Scalar
 

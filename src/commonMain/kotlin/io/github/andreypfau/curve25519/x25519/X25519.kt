@@ -5,10 +5,10 @@ import io.github.andreypfau.curve25519.ed25519.Ed25519PrivateKey
 import io.github.andreypfau.curve25519.ed25519.Ed25519PublicKey
 import io.github.andreypfau.curve25519.edwards.CompressedEdwardsY
 import io.github.andreypfau.curve25519.edwards.EdwardsPoint
-import io.github.andreypfau.curve25519.internal.constantTimeEquals
-import io.github.andreypfau.curve25519.internal.sha512
 import io.github.andreypfau.curve25519.montgomery.MontgomeryPoint
 import io.github.andreypfau.curve25519.scalar.Scalar
+import io.github.andreypfau.kotlinx.crypto.Sha512
+import io.github.andreypfau.kotlinx.crypto.subtle.constantTimeEquals
 import kotlin.jvm.JvmStatic
 
 object X25519 {
@@ -54,9 +54,9 @@ object X25519 {
         output: ByteArray = ByteArray(SCALAR_SIZE_BYTES),
         offset: Int = 0
     ): ByteArray {
-        val digest = sha512(privateKey.data, 0, 32)
-        clampScalar(digest)
-        digest.copyInto(output, offset, 0, SCALAR_SIZE_BYTES)
+        val hash = Sha512().update(privateKey.data, 0, 32).digest()
+        clampScalar(hash)
+        hash.copyInto(output, offset, 0, SCALAR_SIZE_BYTES)
         return output
     }
 

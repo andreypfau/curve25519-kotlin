@@ -37,11 +37,9 @@ class Scalar(
     }
 
     fun toRadix16(output: ByteArray = ByteArray(64)): ByteArray {
-        // Step 1: change radix.
-        // Convert from radix 256 (bytes) to radix 16 (nibbles)
         for (i in 0 until 32) {
-            output[2 * i] = botHalf(data[i])
-            output[2 * i + 1] = topHalf(data[i])
+            output[2 * i] = ((data[i].toInt() ushr 0) and 15).toByte()
+            output[2 * i + 1] = ((data[i].toInt() ushr 4) and 15).toByte()
         }
         // Precondition note: since self[31] <= 127, output[63] <= 7
 
@@ -157,9 +155,3 @@ class Scalar(
         }
     }
 }
-
-private inline fun botHalf(x: Byte): Byte =
-    ((x.toInt() ushr 0) and 15).toByte()
-
-private inline fun topHalf(x: Byte): Byte =
-    ((x.toInt() ushr 4) and 15).toByte()

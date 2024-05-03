@@ -15,7 +15,7 @@ class UnpackedScalar(
 ) {
     constructor(l0: ULong, l1: ULong, l2: ULong, l3: ULong, l4: ULong) : this(ulongArrayOf(l0, l1, l2, l3, l4))
 
-    inline operator fun get(index: Int) = data[index]
+    operator fun get(index: Int) = data[index]
 
     fun bytes(input: ByteArray, offset: Int = 0) {
         val words = ULongArray(4) {
