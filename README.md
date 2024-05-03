@@ -10,7 +10,7 @@
 
 ```kotlin
 dependencies {
-    implementation("io.github.andreypfau:curve25519-kotlin:0.0.6")
+    implementation("io.github.andreypfau:curve25519-kotlin:0.0.7")
 }
 ```
 
@@ -20,7 +20,7 @@ dependencies {
 <dependency>
     <groupId>io.github.andreypfau</groupId>
     <artifactId>curve25519-kotlin-jvm</artifactId>
-    <version>0.0.6</version>
+    <version>0.0.7</version>
 </dependency>
 ```
 
